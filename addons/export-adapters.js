@@ -13,6 +13,12 @@ function sync(root, args) {
 
   function write(p, content) {
     if (fs.existsSync(p) && !force) { skipped.push(path.relative(root, p)); return; }
+    if (fs.existsSync(p) && force && fs.readFileSync(p, "utf8") !== content) {
+      // 覆盖前备份：用户手改过的生成物不许静默丢失
+      const bak = `${p}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`;
+      fs.copyFileSync(p, bak);
+      written.push(path.relative(root, bak) + "（原文件备份）");
+    }
     fs.mkdirSync(path.dirname(p), { recursive: true });
     fs.writeFileSync(p, content);
     written.push(path.relative(root, p));
@@ -97,9 +103,9 @@ function mergeClaudeSettings(root, written, skipped) {
   const p = path.join(root, ".claude", "settings.json");
   const OURS = [
     { matcher: "Write|Edit|MultiEdit|NotebookEdit",
-      hooks: [{ type: "command", command: "node .ai/hooks/guard-write.js" }] },
+      hooks: [{ type: "command", command: "node \"${CLAUDE_PROJECT_DIR:-.}/.ai/hooks/guard-write.js\"" }] },
     { matcher: "Bash",
-      hooks: [{ type: "command", command: "node .ai/hooks/guard-bash.js" }] },
+      hooks: [{ type: "command", command: "node \"${CLAUDE_PROJECT_DIR:-.}/.ai/hooks/guard-bash.js\"" }] },
   ];
   let obj = {};
   if (fs.existsSync(p)) {
@@ -111,10 +117,15 @@ function mergeClaudeSettings(root, written, skipped) {
   }
   obj.hooks = obj.hooks || {};
   obj.hooks.PreToolUse = obj.hooks.PreToolUse || [];
-  const have = JSON.stringify(obj.hooks.PreToolUse);
   let added = 0;
   for (const entry of OURS) {
-    if (!have.includes(entry.hooks[0].command)) { obj.hooks.PreToolUse.push(entry); added++; }
+    const fname = entry.hooks[0].command.match(/guard-\w+\.js/)[0];
+    const cur = obj.hooks.PreToolUse.filter((e) => JSON.stringify(e).includes(fname));
+    if (cur.length === 1 && JSON.stringify(cur[0]) === JSON.stringify(entry)) continue; // 已是最新
+    // 去掉旧版条目（如相对路径写法）再放入最新——按文件名去重，其余用户条目不动
+    obj.hooks.PreToolUse = obj.hooks.PreToolUse.filter((e) => !JSON.stringify(e).includes(fname));
+    obj.hooks.PreToolUse.push(entry);
+    added++;
   }
   if (added) {
     fs.mkdirSync(path.dirname(p), { recursive: true });

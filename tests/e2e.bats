@@ -522,3 +522,103 @@ PYCFG
   run bash -c 'echo "{\"tool_input\":{\"command\":\"node .ai/../bin/ai.js confirm y\"}}" | node "$0"' "$G"
   [ "$status" -eq 2 ]
 }
+
+# ── 12. 生命周期/哈希/密钥/软核验（本轮自审修复）────────────
+
+# shipped 后：不再触发多变更强制隔离，guard-write 也不再连坐
+@test "t23 shipped change stops constraining gates and hooks" {
+  full_change_fixture
+  run $AI confirm order-export
+  mkdir -p "$PROJ/test-results/order-export"
+  cat > "$PROJ/test-results/order-export/TEST-a.xml" <<'XML1'
+<testsuite tests="2"><testcase classname="T" name="test_TC01_ok"/><testcase classname="T" name="test_TC02_ok"/></testsuite>
+XML1
+  run $AI ship order-export
+  [ "$status" -eq 0 ]
+  [ -f "$PROJ/.ai/changes/order-export/shipped.json" ]
+
+  # 第二个变更：旧变更已交付不计数 → 全局报告即可，不被逼隔离
+  mkdir -p "$PROJ/.ai/changes/next-one"
+  cp "$PROJ/.ai/changes/order-export/proposal.md" "$PROJ/.ai/changes/next-one/proposal.md"
+  cp "$PROJ/.ai/changes/order-export/test-cases.md" "$PROJ/.ai/changes/next-one/test-cases.md"
+  rm -rf "$PROJ/test-results"
+  run $AI confirm next-one
+  [ "$status" -eq 0 ]
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-b.xml" <<'XML2'
+<testsuite tests="2"><testcase classname="T" name="test_TC01_ok"/><testcase classname="T" name="test_TC02_ok"/></testsuite>
+XML2
+  run $AI ship next-one
+  [ "$status" -eq 0 ]
+
+  # 已交付变更声明过的文件不再进 guard-write 白名单/锁定（无活跃变更 → 放行）
+  cd "$PROJ"
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/Anything.java\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-write.js"
+  [ "$status" -eq 0 ]
+}
+
+# 哈希化确认：mtime 变化（git clone/换机器场景）不再假失效；内容变了才失效
+@test "t24 hash-based confirm survives mtime churn" {
+  full_change_fixture
+  run $AI confirm order-export
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-a.xml" <<'XML3'
+<testsuite tests="2"><testcase classname="T" name="test_TC01_ok"/><testcase classname="T" name="test_TC02_ok"/></testsuite>
+XML3
+  sleep 1 && touch "$PROJ/.ai/changes/order-export/proposal.md"   # 只动 mtime，内容不变
+  run $AI ship order-export
+  [ "$status" -eq 0 ]                                             # 旧版 mtime 方案这里会假失效
+
+  echo "实质修改" >> "$PROJ/.ai/changes/order-export/proposal.md"
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q '确认已过期' <<<"$output"
+}
+
+# 简单任务通道：未确认草稿只锁自己声明的文件，无关文件放行；子目录+环境变量下仍工作
+@test "t25 draft locks only declared files and root env works" {
+  full_change_fixture
+  cd "$PROJ"
+  G="$PROJ/.ai/hooks/guard-write.js"
+  # 未确认：声明内拦、声明外放（简单任务不被烂尾草稿连坐）
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/OrderController.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 2 ]
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/config/Timeout.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 0 ]
+  # 从子目录跑（模拟子目录启动 Claude），靠 CLAUDE_PROJECT_DIR 找根
+  mkdir -p "$PROJ/sub" && cd "$PROJ/sub"
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/OrderController.java\"}}" | CLAUDE_PROJECT_DIR="'"$PROJ"'" node "$0"' "$G"
+  [ "$status" -eq 2 ]
+}
+
+# 密钥扫描 + 声明诚实性软核验（需 git 提交历史）
+@test "t26 secret scan blocks and drift check warns" {
+  full_change_fixture
+  cd "$PROJ"
+  git add -A && git -c user.email=t@t -c user.name=t commit -qm init
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-a.xml" <<'XML4'
+<testsuite tests="2"><testcase classname="T" name="test_TC01_ok"/><testcase classname="T" name="test_TC02_ok"/></testsuite>
+XML4
+
+  # 未声明的业务文件改动 → 软核验警告但不拦
+  mkdir -p src && echo "public class Sneaky {}" > src/Sneaky.java
+  git add -A
+  run $AI ship order-export
+  [ "$status" -eq 0 ]
+  grep -q '未在影响范围声明' <<<"$output"
+  grep -q 'Sneaky' <<<"$output"
+
+  # diff 里出现密钥 → 拦
+  echo 'key = "AKIAIOSFODNN7EXAMPLE"' >> src/Sneaky.java
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q 'SECRET_HIT' <<<"$output"
+
+  # 明示关闭后放行（测试假数据场景的逃生阀）
+  python3 -c "import json;p='$PROJ/.ai/config.json';c=json.load(open(p));c['secretScan']='off';json.dump(c,open(p,'w'))"
+  run $AI ship order-export
+  [ "$status" -eq 0 ]
+}
