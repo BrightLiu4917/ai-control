@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ai —— 控制系统统一入口（npm 全局命令）
 //
-//   ai init [--stack <java|vue|react|go|php>] [--update]   安装/更新到当前项目
+//   ai init [--stack <java|go|php|vue|react|node|mixed>] [--update|--force]   安装/更新到当前项目
 //   ai new <id> [--lite|--upgrade]                          建变更骨架（lite 两件套）
 //   ai check <id>                                           契约门禁：影响范围/lite越界/用例覆盖/待确认
 //   ai test                                                 跑项目测试（JUnit 报告即证据）

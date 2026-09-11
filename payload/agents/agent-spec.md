@@ -28,15 +28,9 @@
 ## 必须读取
 
 - `AGENTS.md`
-- `CONTEXT.md` 或 `CONTEXT-MAP.md`
-- `.ai/rules/03-product.md`
-- `.ai/rules/02-business.md`
+- `.ai/rules/02-product-ux.md`（产品/交互/文案规范）
 - 相关 `openspec/specs/`
 - 相关 `openspec/changes/`
-- `TASK_TEMPLATE.md`
-- `.ai/docs/AGENT_ROUTING.md`
-- `openspec/config.yaml`
-- 相关 `.ai/docs/`
 - `.ai/rules/20-api.md`
 - `.ai/rules/24-openapi.md`，如涉及 Swagger/OpenAPI 文档
 - `.ai/rules/22-rbac.md`，如涉及后台权限接口

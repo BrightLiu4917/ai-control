@@ -13,10 +13,10 @@
     "README.md"
   ],
   "scripts": {
-    "test": "bats tests/ && node tests/unit.test.js && node tests/budget.js"
+    "test": "node tests/unit.test.js && node tests/budget.js && node tests/refs.js && npx bats tests/"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18.17"
   },
   "repository": {
     "type": "git",
@@ -30,5 +30,8 @@
     "codex",
     "cursor"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "bats": "^1.11.0"
+  }
 }

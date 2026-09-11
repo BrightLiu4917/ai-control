@@ -10,7 +10,7 @@
 
 测试工程师在一个 change 中介入两次：
 
-1. **设计阶段**：OpenSpec change 确认前，产出 `test-cases.md`（模板见 `.ai/templates/openspec-change/test-cases.md`），随 change 一起等待用户确认。用例是验收契约。
+1. **设计阶段**：OpenSpec change 确认前，产出 `test-cases.md`（模板见 `.ai/templates/test-cases.md`），随 change 一起等待用户确认。用例是验收契约。
 2. **执行阶段**：实现完成后，按已确认用例执行；验收证据是 JUnit 报告（自动化）和交付说明（手动），不维护状态表。禁止为迁就实现修改已确认用例，确需修改必须重新经用户确认。
 
 ## 适用场景

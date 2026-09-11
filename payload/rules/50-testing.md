@@ -22,37 +22,15 @@
 - 禁止把完整无关日志直接喂给模型；应先摘要再分析。
 
 ## 本地验证入口
-目标项目应优先提供：
+统一使用：
 
 ```bash
-bash .ai/scripts/run-tests.sh
+ai test
 ```
 
-如果项目验证命令特殊，通过环境变量覆盖：
+项目测试命令特殊时（如 `mvn test -DskipITs=false`、`make test`），写入 `.ai/config.json` 的 `testCommand` 字段，`ai test` 会优先使用它。
 
-```bash
-PROJECT_TEST_COMMAND='mvn test -DskipITs=false' bash .ai/scripts/run-tests.sh
-```
-
-需要持久保存时，写入目标项目本机配置：
-
-```text
-.agent/project.env
-```
-
-示例见 `templates/project.env.example`。
-
-完整日志默认写入：
-
-```text
-.agent/logs/test.log
-```
-
-给 AI 助手、本地 Agent 或独立二审的失败信息应优先来自：
-
-```bash
-bash .ai/scripts/summarize-log.sh .agent/logs/test.log
-```
+把失败信息交给 AI 分析时，先摘要（失败用例名 + 断言信息 + 关键堆栈），禁止整份日志直接贴入上下文。
 
 ## 输出要求
 交付必须说明：

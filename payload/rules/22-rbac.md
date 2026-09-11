@@ -6,7 +6,7 @@
 
 ## 项目级开关
 
-项目可以通过 `.ai-control/project.env` 的 `ACCESS_CONTROL_MODE` 说明访问控制模式：
+项目可以通过 `.ai/config.json` 的 `accessControlMode` 字段说明访问控制模式（未声明视为 `pending`）：
 
 | 值 | 含义 |
 |----|------|

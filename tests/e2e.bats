@@ -255,3 +255,23 @@ PY
   grep -q '规则快照' "$PROJ/workbuddy-skills/agent-dba/SKILL.md"
   grep -q 'pk_id' "$PROJ/workbuddy-skills/agent-dba/SKILL.md"
 }
+
+# ── 8. 外部审计第一批修复的回归 ─────────────────────────────
+
+@test "init: 已有 AGENTS.md 不死锁——提示 --force，--force 备份后安装成功" {
+  echo "# 我原有的契约" > "$PROJ/AGENTS.md"
+  run $AI init --stack java
+  [ "$status" -ne 0 ]
+  grep -q -- '--force' <<<"$output"          # 错误信息必须给出可执行的下一步
+  run $AI init --stack java --force
+  [ "$status" -eq 0 ]
+  ls "$PROJ"/AGENTS.md.bak-* >/dev/null       # 原文件已备份
+  grep -q '红线' "$PROJ/AGENTS.md"            # 新契约已就位
+}
+
+@test "init: --stack 白名单校验，拼错立即报错" {
+  run $AI init --stack javas
+  [ "$status" -ne 0 ]
+  grep -q 'mixed' <<<"$output"                # 报错需列出可用值
+  [ ! -d "$PROJ/.ai" ]                        # 未留下半安装状态
+}
