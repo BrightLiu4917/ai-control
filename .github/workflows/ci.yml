@@ -1,0 +1,22 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 单元测试
+        run: node tests/unit.test.js
+      - name: 预算门禁
+        run: node tests/budget.js
+      - name: 验收测试（E2E）
+        run: |
+          sudo npm i -g bats
+          git config --global user.email ci@ci && git config --global user.name ci
+          bats tests/e2e.bats

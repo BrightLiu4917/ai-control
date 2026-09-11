@@ -1,0 +1,34 @@
+{
+  "name": "@brightliu/ai-control",
+  "version": "2.0.0",
+  "description": "AGENTS.md 标准之上的中文全栈 AI 工程控制层：规格先行、DB 两阶段确认、证据验收。支持 Codex / Claude Code / Cursor / Kimi / Qoder / WorkBuddy。",
+  "bin": {
+    "ai": "bin/ai.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "payload/",
+    "addons/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "bats tests/ && node tests/unit.test.js && node tests/budget.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BrightLiu4917/ai-control.git"
+  },
+  "keywords": [
+    "agents-md",
+    "ai-coding",
+    "spec-driven",
+    "claude-code",
+    "codex",
+    "cursor"
+  ],
+  "license": "MIT"
+}
