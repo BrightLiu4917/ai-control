@@ -23,7 +23,11 @@ function sync(root, args) {
 
   const agentFiles = fs.readdirSync(agentsDir).filter((f) => f.startsWith("agent-") && f.endsWith(".md"));
 
-  // 1. CLAUDE.md
+  // 1. .claude/settings.json：PreToolUse 钩子。项目可能已有自己的 settings.json——
+  // 只做 JSON 合并（缺哪条补哪条），绝不整文件覆盖用户的 permissions/其他 hooks；写后读回校验。
+  const hooksOk = mergeClaudeSettings(root, written, skipped);
+
+  // 2. CLAUDE.md（钩子状态按合并的实际结果措辞，不许说大话）
   write(path.join(root, "CLAUDE.md"),
 `# 项目契约入口（Claude Code）
 
@@ -31,20 +35,10 @@ function sync(root, args) {
 
 - 角色手册已导出为 \`.claude/agents/\` 原生 subagent，匹配任务自动委派。
 - 变更流程可通过 \`.claude/skills/\` 技能触发。
-- PreToolUse 钩子已启用：未确认变更时写业务代码、写影响范围外文件、执行危险 SQL 会被当场拦截（临时停用：AI_CONTROL_HOOKS=off）。
+${hooksOk
+    ? "- PreToolUse 钩子已启用：未确认变更时写业务代码、写影响范围外文件、执行危险 SQL、代跑 ai confirm 会被当场拦截（临时停用：AI_CONTROL_HOOKS=off）。"
+    : "- 注意：PreToolUse 钩子未安装（.claude/settings.json 无法合并）；上述拦截不生效，仅靠契约约束。"}
 `);
-
-  // 1.5 .claude/settings.json：PreToolUse 钩子把门禁前移到写入/执行瞬间
-  write(path.join(root, ".claude", "settings.json"), JSON.stringify({
-    hooks: {
-      PreToolUse: [
-        { matcher: "Write|Edit|MultiEdit|NotebookEdit",
-          hooks: [{ type: "command", command: "node .ai/hooks/guard-write.js" }] },
-        { matcher: "Bash",
-          hooks: [{ type: "command", command: "node .ai/hooks/guard-bash.js" }] },
-      ],
-    },
-  }, null, 2) + "\n");
 
   // 2. .claude/agents/
   for (const f of agentFiles) {
@@ -59,11 +53,11 @@ function sync(root, args) {
   // 3. .claude/skills/
   const skills = {
     "new-feature": ["为新功能创建 change 骨架。用户说“加个XX”“帮我做XX”“改一下XX”等提出需求时使用；先影响探测判级（lite/完整）。",
-      "# 新功能流程\n\n1. 与用户确认 change-id（小写中横线）。\n2. 运行 `ai new <id>`（小需求 `--lite`）。\n3. 按产品规格工程师手册补全 proposal 与验收用例，答掉待确认问题。\n4. `ai check <id>` 通过后，输出带级别与判级理由的确认单，等用户确认。\n5. 用户确认后运行 `ai confirm <id>` 写入确认留痕（ship 的前置）。\n"],
+      "# 新功能流程\n\n1. 与用户确认 change-id（小写中横线）。\n2. 运行 `ai new <id>`（小需求 `--lite`）。\n3. 按产品规格工程师手册补全 proposal 与验收用例，答掉待确认问题。\n4. `ai check <id>` 通过后，输出带级别与判级理由的确认单，等用户确认。\n5. 把 `ai confirm <id>` 交给用户本人运行（AI 禁止代跑；ship 的前置）。\n"],
     "ready-check": ["校验 change 是否可请求确认。用户说“检查一下”“可以确认了吗”时使用。",
-      "# 就绪校验\n\n运行 `ai check <id>`；失败逐项修复后重跑，通过后向用户输出确认单；用户点头后运行 `ai confirm <id>`。\n"],
+      "# 就绪校验\n\n运行 `ai check <id>`；失败逐项修复后重跑，通过后向用户输出确认单；把 `ai confirm <id>` 交给用户本人运行。\n"],
     "release-ship": ["发布门禁。用户说“测一下”“能上线吗”“发布”时使用。",
-      "# 发布流程\n\n1. `ai test` 跑测试（JUnit 报告即证据，可输出到 test-results/<change-id>/ 与其他变更隔离）。\n2. `ai ship <id>` 过证据门禁。\n3. 按 `.ai/rules/53-release.md` 清单过与本次变更相关的项。\n4. 高风险变更建议在新会话用 `.ai/templates/review-prompt.md` 做独立审查。\n"],
+      "# 发布流程\n\n1. `ai test <change-id>` 跑测试（报告自动写入 test-results/<change-id>/，与其他变更隔离）。\n2. `ai ship <id>` 过证据门禁。\n3. 按 `.ai/rules/53-release.md` 清单过与本次变更相关的项。\n4. 高风险变更建议在新会话用 `.ai/templates/review-prompt.md` 做独立审查。\n"],
   };
   for (const [name, [desc, body]] of Object.entries(skills)) {
     write(path.join(root, ".claude", "skills", name, "SKILL.md"), `---\nname: ${name}\ndescription: ${desc}\n---\n\n${body}`);
@@ -95,6 +89,44 @@ function sync(root, args) {
   console.log(`SYNC_OK written=${written.length} skipped=${skipped.length}`);
   written.forEach((p) => console.log(`  + ${p}`));
   console.log("WorkBuddy：项目级技能已写入 .workbuddy/skills/，重启 WorkBuddy 生效（无需复制；若曾装过 v1 全局技能，请从 ~/.workbuddy/skills/ 删除 agent-architect/agent-release 等残留）。Codex/Cursor/Kimi/Qoder 原生读 AGENTS.md 无需操作。");
+}
+
+// 合并 PreToolUse 钩子进 .claude/settings.json：只追加缺失项，保留用户已有内容。
+// 返回“钩子确实已就位”（写后读回校验）；settings.json 非法 JSON 时不动它并返回 false。
+function mergeClaudeSettings(root, written, skipped) {
+  const p = path.join(root, ".claude", "settings.json");
+  const OURS = [
+    { matcher: "Write|Edit|MultiEdit|NotebookEdit",
+      hooks: [{ type: "command", command: "node .ai/hooks/guard-write.js" }] },
+    { matcher: "Bash",
+      hooks: [{ type: "command", command: "node .ai/hooks/guard-bash.js" }] },
+  ];
+  let obj = {};
+  if (fs.existsSync(p)) {
+    try { obj = JSON.parse(fs.readFileSync(p, "utf8")); }
+    catch {
+      console.error("警告：.claude/settings.json 不是合法 JSON，已跳过 hooks 注入（未改动该文件）。");
+      return false;
+    }
+  }
+  obj.hooks = obj.hooks || {};
+  obj.hooks.PreToolUse = obj.hooks.PreToolUse || [];
+  const have = JSON.stringify(obj.hooks.PreToolUse);
+  let added = 0;
+  for (const entry of OURS) {
+    if (!have.includes(entry.hooks[0].command)) { obj.hooks.PreToolUse.push(entry); added++; }
+  }
+  if (added) {
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n");
+    written.push(path.relative(root, p) + `（合并 ${added} 条钩子，用户配置保留）`);
+  } else {
+    skipped.push(path.relative(root, p) + "（钩子已在）");
+  }
+  // 写后读回校验
+  try {
+    return JSON.stringify(JSON.parse(fs.readFileSync(p, "utf8"))).includes("guard-write.js");
+  } catch { return false; }
 }
 
 module.exports = { sync };

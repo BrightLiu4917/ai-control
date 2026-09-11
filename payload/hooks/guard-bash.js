@@ -15,6 +15,11 @@ process.stdin.on("end", () => {
   } catch {
     process.exit(0);
   }
+  // 确认必须出自用户之手：AI 代跑 ai confirm 会让"确认留痕"失去意义
+  if (/\bai(\.js)?\s+confirm\b/.test(cmd)) {
+    console.error("[ai-control] 已拦截：ai confirm 必须由用户本人在终端执行。请向用户输出确认单，并把 `ai confirm <change-id>` 这条命令交给用户运行。");
+    process.exit(2);
+  }
   const hits = [];
   if (/\bdrop\s+(table|database)\b/i.test(cmd)) hits.push("DROP TABLE/DATABASE");
   if (/\btruncate\s+(table\s+)?\S+/i.test(cmd)) hits.push("TRUNCATE");

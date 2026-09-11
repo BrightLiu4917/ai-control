@@ -19,7 +19,7 @@ install_here() {
 
 # ── 1. 安装 ──────────────────────────────────────────────
 
-@test "init 安装：AGENTS.md + ai 入口 + .ai/ 资产齐全" {
+@test "t01 init 安装：AGENTS.md + ai 入口 + .ai/ 资产齐全" {
   install_here
   [ -f "$PROJ/AGENTS.md" ]
   [ -d "$PROJ/.ai/rules" ]
@@ -31,7 +31,7 @@ install_here() {
   [ "$(wc -l < "$PROJ/AGENTS.md")" -le 100 ]
 }
 
-@test "init 不覆盖已有 AGENTS.md；--update 只更新框架且先备份" {
+@test "t02 init 不覆盖已有 AGENTS.md；--update 只更新框架且先备份" {
   echo "用户自己的契约" > "$PROJ/AGENTS.md"
   run $AI init --stack java
   [ "$status" -ne 0 ]
@@ -49,7 +49,7 @@ install_here() {
 
 # ── 2. lite 全手动路径（v1 曾经的死锁场景）─────────────────
 
-@test "lite 改文案：两件套 → check → ship 全程无阻" {
+@test "t03 lite 改文案：两件套 → check → ship 全程无阻" {
   install_here
   run $AI new fix-text --lite
   [ "$status" -eq 0 ]
@@ -110,7 +110,7 @@ EOF
 EOF
 }
 
-@test "完整变更：报告齐全且全绿 → ship 过；缺 TC/有失败 → 拦" {
+@test "t04 完整变更：报告齐全且全绿 → ship 过；缺 TC/有失败 → 拦" {
   full_change_fixture
   run $AI confirm order-export
   [ "$status" -eq 0 ]
@@ -150,7 +150,7 @@ EOF
   grep -q 'SHIP_GATES_PASSED' <<<"$output"
 }
 
-@test "affected_apis 非 none 而用例缺异常流 → check 拦截" {
+@test "t05 affected_apis 非 none 而用例缺异常流 → check 拦截" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
 import sys
@@ -165,7 +165,7 @@ PY
 
 # ── 4. lite 越界与升级 ────────────────────────────────────
 
-@test "lite 声明数据库 → check 拦并指向 --upgrade；升级保留已写内容" {
+@test "t06 lite 声明数据库 → check 拦并指向 --upgrade；升级保留已写内容" {
   install_here
   $AI new tiny --lite >/dev/null
   python3 - "$PROJ/.ai/changes/tiny/proposal.md" <<'PY'
@@ -190,7 +190,7 @@ PY
 
 # ── 5. 高风险提示（v1 曾经的误报场景）─────────────────────
 
-@test "碰表提示独立审查；tables=none 不误报" {
+@test "t07 碰表提示独立审查；tables=none 不误报" {
   full_change_fixture
   run $AI confirm order-export
   [ "$status" -eq 0 ]
@@ -225,7 +225,7 @@ PY
 
 # ── 6. 待确认门禁（只查章节，不全文扫）───────────────────
 
-@test "待确认问题未答 → check 拦；正文出现'待确认'字样不拦" {
+@test "t08 待确认问题未答 → check 拦；正文出现'待确认'字样不拦" {
   install_here
   $AI new q-test --lite >/dev/null
   python3 - "$PROJ/.ai/changes/q-test" <<'PY'
@@ -253,7 +253,7 @@ PY
 
 # ── 7. 适配导出 ───────────────────────────────────────────
 
-@test "sync 生成 Claude 与 WorkBuddy 适配物且自包含" {
+@test "t09 sync 生成 Claude 与 WorkBuddy 适配物且自包含" {
   install_here
   run $AI sync
   [ "$status" -eq 0 ]
@@ -267,7 +267,7 @@ PY
 
 # ── 8. 外部审计第一批修复的回归 ─────────────────────────────
 
-@test "init: 已有 AGENTS.md 不死锁——提示 --force，--force 备份后安装成功" {
+@test "t10 init: 已有 AGENTS.md 不死锁——提示 --force，--force 备份后安装成功" {
   echo "# 我原有的契约" > "$PROJ/AGENTS.md"
   run $AI init --stack java
   [ "$status" -ne 0 ]
@@ -278,7 +278,7 @@ PY
   grep -q '红线' "$PROJ/AGENTS.md"            # 新契约已就位
 }
 
-@test "init: --stack 白名单校验，拼错立即报错" {
+@test "t11 init: --stack 白名单校验，拼错立即报错" {
   run $AI init --stack javas
   [ "$status" -ne 0 ]
   grep -q 'mixed' <<<"$output"                # 报错需列出可用值
@@ -287,7 +287,7 @@ PY
 
 # ── 9. 外部审计第二批修复的回归 ─────────────────────────────
 
-@test "P0-1: 碰接口却全手动用例 → check 拦（升级绕过被堵）" {
+@test "t12 P0-1: 碰接口却全手动用例 → check 拦（升级绕过被堵）" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
 import sys
@@ -300,7 +300,7 @@ PY
   grep -q '非手动' <<<"$output"
 }
 
-@test "confirm 门禁：未确认不能 ship；确认后偷改变更单 → 确认失效" {
+@test "t13 confirm 门禁：未确认不能 ship；确认后偷改变更单 → 确认失效" {
   full_change_fixture
   mkdir -p "$PROJ/test-results"
   cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
@@ -327,7 +327,7 @@ EOF
   grep -q '确认已过期' <<<"$output"            # 确认后改动 → 失效
 }
 
-@test "P0-2: 旧报告顶包 → ship 拦（报告须晚于确认时间）" {
+@test "t14 P0-2: 旧报告顶包 → ship 拦（报告须晚于确认时间）" {
   full_change_fixture
   mkdir -p "$PROJ/test-results"
   cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
@@ -345,7 +345,7 @@ EOF
   grep -q '旧报告' <<<"$output"
 }
 
-@test "P1-1: 行内 YAML（affected_tables: none）不再误伤" {
+@test "t15 P1-1: 行内 YAML（affected_tables: none）不再误伤" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/proposal.md" <<'PY'
 import sys
@@ -361,7 +361,7 @@ PY
 
 # ── 10. 第三批：hooks 前移与团队门禁 ────────────────────────
 
-@test "sync 生成 PreToolUse 钩子配置；guard-bash 拦危险 SQL、放行安全命令" {
+@test "t16 sync 生成 PreToolUse 钩子配置；guard-bash 拦危险 SQL、放行安全命令" {
   install_here
   run $AI sync
   [ "$status" -eq 0 ]
@@ -379,7 +379,7 @@ PY
   [ "$status" -eq 0 ]
 }
 
-@test "guard-write：未确认拦业务代码；确认后只放行影响范围内文件" {
+@test "t17 guard-write：未确认拦业务代码；确认后只放行影响范围内文件" {
   full_change_fixture
   cd "$PROJ"
   G="$PROJ/.ai/hooks/guard-write.js"
@@ -406,4 +406,86 @@ PY
   # 逃生阀
   run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/PayService.java\"}}" | AI_CONTROL_HOOKS=off node "$0"' "$G"
   [ "$status" -eq 0 ]
+}
+
+# ── 11. 第二轮外部审计（N-1/N-2/N-3）回归 ───────────────────
+
+@test "t18 N-1: 已有 settings.json 时 sync 做 JSON 合并，不覆盖用户配置" {
+  install_here
+  mkdir -p "$PROJ/.claude"
+  cat > "$PROJ/.claude/settings.json" <<'XML1'
+{
+  "permissions": { "allow": ["Bash(npm test)"] },
+  "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [ { "type": "command", "command": "echo user-own-hook" } ] } ] }
+}
+XML1
+  run $AI sync
+  [ "$status" -eq 0 ]
+  grep -q 'user-own-hook' "$PROJ/.claude/settings.json"     # 用户自己的钩子还在
+  grep -q 'npm test' "$PROJ/.claude/settings.json"          # 用户 permissions 还在
+  grep -q 'guard-write' "$PROJ/.claude/settings.json"       # 我们的钩子已合并
+  grep -q '钩子已启用' "$PROJ/CLAUDE.md"                    # 文案与实际一致
+  node -e "JSON.parse(require('fs').readFileSync('$PROJ/.claude/settings.json','utf8'))"  # 仍是合法 JSON
+
+  run $AI sync --force
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'guard-bash' "$PROJ/.claude/settings.json")" -eq 1 ]   # 幂等：不重复追加
+}
+
+@test "t19 N-3: 多变更并存时全局报告不算证据，必须按变更隔离" {
+  full_change_fixture
+  mkdir -p "$PROJ/.ai/changes/other-x"          # 存在第二个变更
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-other.xml" <<'XML2'
+<?xml version="1.0"?>
+<testsuite tests="2">
+  <testcase classname="T" name="test_other_TC01_x"/>
+  <testcase classname="T" name="test_other_TC02_x"/>
+</testsuite>
+XML2
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q '按变更隔离' <<<"$output"            # 别的变更的新鲜报告不再能顶包
+
+  mkdir -p "$PROJ/test-results/order-export"
+  cat > "$PROJ/test-results/order-export/TEST-a.xml" <<'XML3'
+<?xml version="1.0"?>
+<testsuite tests="2">
+  <testcase classname="T" name="test_TC01_ok"/>
+  <testcase classname="T" name="test_TC02_ok"/>
+</testsuite>
+XML3
+  run $AI ship order-export
+  [ "$status" -eq 0 ]                          # 隔离目录内的证据 → 过
+}
+
+@test "t20 N-2: ai test <id> 把新报告收进隔离目录，端到端链路全绿" {
+  full_change_fixture
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  python3 - "$PROJ/.ai/config.json" <<'PYCFG'
+import json, sys
+p = sys.argv[1]
+cfg = json.load(open(p))
+cfg["testCommand"] = ("mkdir -p target/surefire-reports && printf '%s' "
+  "'<testsuite tests=\"2\"><testcase classname=\"T\" name=\"test_TC01_ok\"/>"
+  "<testcase classname=\"T\" name=\"test_TC02_ok\"/></testsuite>' "
+  "> target/surefire-reports/TEST-h.xml")
+json.dump(cfg, open(p, "w"))
+PYCFG
+  run $AI test order-export
+  [ "$status" -eq 0 ]
+  [ -f "$PROJ/test-results/order-export/TEST-h.xml" ]   # 收割进了隔离目录
+  run $AI ship order-export
+  [ "$status" -eq 0 ]
+  grep -q 'SHIP_GATES_PASSED' <<<"$output"
+}
+
+@test "t21 guard-bash: AI 代跑 ai confirm 被拦" {
+  install_here
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"ai confirm my-change\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-bash.js"
+  [ "$status" -eq 2 ]
+  grep -q '用户本人' <<<"$output"
 }

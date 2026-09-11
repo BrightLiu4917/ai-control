@@ -5,7 +5,7 @@
 //   ai new <id> [--lite|--upgrade]                          建变更骨架（lite 两件套）
 //   ai check <id>                                           契约门禁：影响范围/lite越界/用例覆盖/待确认
 //   ai confirm <id>                                         用户确认后留痕（by/at/sha），ship 的前置
-//   ai test                                                 跑项目测试（JUnit 报告即证据）
+//   ai test [<id>]                                          跑项目测试（带 id 时报告按变更隔离）
 //   ai ship <id> [报告目录...]                               证据门禁：报告直查 + 高风险提示
 //   ai sync [--force]                                       导出 Claude/WorkBuddy 适配物
 //   ai doctor                                               环境体检
