@@ -11,7 +11,7 @@ const BUDGETS = [
   { name: "内核 JS（bin/ + lib/）", glob: ["bin", "lib"], ext: ".js", max: 1500 },
   { name: "addons JS（含 payload/hooks）", glob: ["addons", "payload/hooks"], ext: ".js", max: 600 },
   { name: "AGENTS.md 契约", file: "payload/AGENTS.md", max: 100 },
-  { name: "文档份数（根 *.md）", docsMax: 1 },
+  { name: "使用文档份数（根 *.md，治理文件除外）", docsMax: 1 },
 ];
 
 function countLines(file) {
@@ -30,7 +30,8 @@ function walk(dir, ext) {
 let fail = false;
 for (const b of BUDGETS) {
   if (b.docsMax !== undefined) {
-    const docs = fs.readdirSync(ROOT).filter((f) => f.endsWith(".md"));
+    const GOVERNANCE = ["CHANGELOG.md", "SECURITY.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md"]; // 治理文件不算使用文档
+    const docs = fs.readdirSync(ROOT).filter((f) => f.endsWith(".md") && !GOVERNANCE.includes(f));
     const ok = docs.length <= b.docsMax;
     console.log(`${ok ? "OK " : "超支"} ${b.name}: ${docs.length}/${b.docsMax} (${docs.join(", ")})`);
     if (!ok) fail = true;

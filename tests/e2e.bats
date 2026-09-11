@@ -19,7 +19,8 @@ install_here() {
 
 # ── 1. 安装 ──────────────────────────────────────────────
 
-@test "t01 init 安装：AGENTS.md + ai 入口 + .ai/ 资产齐全" {
+# init 安装：AGENTS.md + ai 入口 + .ai/ 资产齐全
+@test "t01 install basic assets" {
   install_here
   [ -f "$PROJ/AGENTS.md" ]
   [ -d "$PROJ/.ai/rules" ]
@@ -31,7 +32,8 @@ install_here() {
   [ "$(wc -l < "$PROJ/AGENTS.md")" -le 100 ]
 }
 
-@test "t02 init 不覆盖已有 AGENTS.md；--update 只更新框架且先备份" {
+# init 不覆盖已有 AGENTS.md；--update 只更新框架且先备份
+@test "t02 no overwrite and update with backup" {
   echo "用户自己的契约" > "$PROJ/AGENTS.md"
   run $AI init --stack java
   [ "$status" -ne 0 ]
@@ -49,7 +51,8 @@ install_here() {
 
 # ── 2. lite 全手动路径（v1 曾经的死锁场景）─────────────────
 
-@test "t03 lite 改文案：两件套 → check → ship 全程无阻" {
+# lite 改文案：两件套 → check → ship 全程无阻
+@test "t03 lite all-manual flow passes" {
   install_here
   run $AI new fix-text --lite
   [ "$status" -eq 0 ]
@@ -110,7 +113,8 @@ EOF
 EOF
 }
 
-@test "t04 完整变更：报告齐全且全绿 → ship 过；缺 TC/有失败 → 拦" {
+# 完整变更：报告齐全且全绿 → ship 过；缺 TC/有失败 → 拦
+@test "t04 full change evidence chain" {
   full_change_fixture
   run $AI confirm order-export
   [ "$status" -eq 0 ]
@@ -150,7 +154,8 @@ EOF
   grep -q 'SHIP_GATES_PASSED' <<<"$output"
 }
 
-@test "t05 affected_apis 非 none 而用例缺异常流 → check 拦截" {
+# affected_apis 非 none 而用例缺异常流 → check 拦截
+@test "t05 apis require exception-flow case" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
 import sys
@@ -165,7 +170,8 @@ PY
 
 # ── 4. lite 越界与升级 ────────────────────────────────────
 
-@test "t06 lite 声明数据库 → check 拦并指向 --upgrade；升级保留已写内容" {
+# lite 声明数据库 → check 拦并指向 --upgrade；升级保留已写内容
+@test "t06 lite db boundary and upgrade keeps content" {
   install_here
   $AI new tiny --lite >/dev/null
   python3 - "$PROJ/.ai/changes/tiny/proposal.md" <<'PY'
@@ -190,7 +196,8 @@ PY
 
 # ── 5. 高风险提示（v1 曾经的误报场景）─────────────────────
 
-@test "t07 碰表提示独立审查；tables=none 不误报" {
+# 碰表提示独立审查；tables=none 不误报
+@test "t07 db hint without false positive" {
   full_change_fixture
   run $AI confirm order-export
   [ "$status" -eq 0 ]
@@ -225,7 +232,8 @@ PY
 
 # ── 6. 待确认门禁（只查章节，不全文扫）───────────────────
 
-@test "t08 待确认问题未答 → check 拦；正文出现'待确认'字样不拦" {
+# 待确认问题未答 → check 拦；正文出现'待确认'字样不拦
+@test "t08 unresolved questions gate section-only" {
   install_here
   $AI new q-test --lite >/dev/null
   python3 - "$PROJ/.ai/changes/q-test" <<'PY'
@@ -253,7 +261,8 @@ PY
 
 # ── 7. 适配导出 ───────────────────────────────────────────
 
-@test "t09 sync 生成 Claude 与 WorkBuddy 适配物且自包含" {
+# sync 生成 Claude 与 WorkBuddy 适配物且自包含
+@test "t09 sync claude and workbuddy self-contained" {
   install_here
   run $AI sync
   [ "$status" -eq 0 ]
@@ -267,7 +276,8 @@ PY
 
 # ── 8. 外部审计第一批修复的回归 ─────────────────────────────
 
-@test "t10 init: 已有 AGENTS.md 不死锁——提示 --force，--force 备份后安装成功" {
+# init: 已有 AGENTS.md 不死锁——提示 --force，--force 备份后安装成功
+@test "t10 init force resolves AGENTS.md deadlock" {
   echo "# 我原有的契约" > "$PROJ/AGENTS.md"
   run $AI init --stack java
   [ "$status" -ne 0 ]
@@ -278,7 +288,8 @@ PY
   grep -q '红线' "$PROJ/AGENTS.md"            # 新契约已就位
 }
 
-@test "t11 init: --stack 白名单校验，拼错立即报错" {
+# init: --stack 白名单校验，拼错立即报错
+@test "t11 init stack whitelist" {
   run $AI init --stack javas
   [ "$status" -ne 0 ]
   grep -q 'mixed' <<<"$output"                # 报错需列出可用值
@@ -287,7 +298,8 @@ PY
 
 # ── 9. 外部审计第二批修复的回归 ─────────────────────────────
 
-@test "t12 P0-1: 碰接口却全手动用例 → check 拦（升级绕过被堵）" {
+# P0-1: 碰接口却全手动用例 → check 拦（升级绕过被堵）
+@test "t12 P0-1 all-manual blocked for db-api change" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
 import sys
@@ -300,7 +312,8 @@ PY
   grep -q '非手动' <<<"$output"
 }
 
-@test "t13 confirm 门禁：未确认不能 ship；确认后偷改变更单 → 确认失效" {
+# confirm 门禁：未确认不能 ship；确认后偷改变更单 → 确认失效
+@test "t13 confirm gate and stale confirm" {
   full_change_fixture
   mkdir -p "$PROJ/test-results"
   cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
@@ -327,7 +340,8 @@ EOF
   grep -q '确认已过期' <<<"$output"            # 确认后改动 → 失效
 }
 
-@test "t14 P0-2: 旧报告顶包 → ship 拦（报告须晚于确认时间）" {
+# P0-2: 旧报告顶包 → ship 拦（报告须晚于确认时间）
+@test "t14 P0-2 old report blocked" {
   full_change_fixture
   mkdir -p "$PROJ/test-results"
   cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
@@ -345,7 +359,8 @@ EOF
   grep -q '旧报告' <<<"$output"
 }
 
-@test "t15 P1-1: 行内 YAML（affected_tables: none）不再误伤" {
+# P1-1: 行内 YAML（affected_tables: none）不再误伤
+@test "t15 P1-1 inline yaml none accepted" {
   full_change_fixture
   python3 - "$PROJ/.ai/changes/order-export/proposal.md" <<'PY'
 import sys
@@ -361,7 +376,8 @@ PY
 
 # ── 10. 第三批：hooks 前移与团队门禁 ────────────────────────
 
-@test "t16 sync 生成 PreToolUse 钩子配置；guard-bash 拦危险 SQL、放行安全命令" {
+# sync 生成 PreToolUse 钩子配置；guard-bash 拦危险 SQL、放行安全命令
+@test "t16 sync hooks and guard-bash sql block" {
   install_here
   run $AI sync
   [ "$status" -eq 0 ]
@@ -379,7 +395,8 @@ PY
   [ "$status" -eq 0 ]
 }
 
-@test "t17 guard-write：未确认拦业务代码；确认后只放行影响范围内文件" {
+# guard-write：未确认拦业务代码；确认后只放行影响范围内文件
+@test "t17 guard-write scope enforcement" {
   full_change_fixture
   cd "$PROJ"
   G="$PROJ/.ai/hooks/guard-write.js"
@@ -410,7 +427,8 @@ PY
 
 # ── 11. 第二轮外部审计（N-1/N-2/N-3）回归 ───────────────────
 
-@test "t18 N-1: 已有 settings.json 时 sync 做 JSON 合并，不覆盖用户配置" {
+# N-1: 已有 settings.json 时 sync 做 JSON 合并，不覆盖用户配置
+@test "t18 N-1 settings json merge preserves user config" {
   install_here
   mkdir -p "$PROJ/.claude"
   cat > "$PROJ/.claude/settings.json" <<'XML1'
@@ -432,7 +450,8 @@ XML1
   [ "$(grep -c 'guard-bash' "$PROJ/.claude/settings.json")" -eq 1 ]   # 幂等：不重复追加
 }
 
-@test "t19 N-3: 多变更并存时全局报告不算证据，必须按变更隔离" {
+# N-3: 多变更并存时全局报告不算证据，必须按变更隔离
+@test "t19 N-3 multi-change requires scoped evidence" {
   full_change_fixture
   mkdir -p "$PROJ/.ai/changes/other-x"          # 存在第二个变更
   run $AI confirm order-export
@@ -461,7 +480,8 @@ XML3
   [ "$status" -eq 0 ]                          # 隔离目录内的证据 → 过
 }
 
-@test "t20 N-2: ai test <id> 把新报告收进隔离目录，端到端链路全绿" {
+# N-2: ai test <id> 把新报告收进隔离目录，端到端链路全绿
+@test "t20 N-2 ai test id harvests into scoped dir" {
   full_change_fixture
   run $AI confirm order-export
   [ "$status" -eq 0 ]
@@ -483,9 +503,22 @@ PYCFG
   grep -q 'SHIP_GATES_PASSED' <<<"$output"
 }
 
-@test "t21 guard-bash: AI 代跑 ai confirm 被拦" {
+# guard-bash: AI 代跑 ai confirm 被拦
+@test "t21 guard-bash blocks ai confirm by AI" {
   install_here
   run bash -c 'echo "{\"tool_input\":{\"command\":\"ai confirm my-change\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-bash.js"
   [ "$status" -eq 2 ]
   grep -q '用户本人' <<<"$output"
+}
+
+# guard-bash: ai confirm 只拦真执行，不拦提交信息等文本（假阳性回归）
+@test "t22 guard-bash no false positive on confirm in message text" {
+  install_here
+  G="$PROJ/.ai/hooks/guard-bash.js"
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"git commit -m \\\"docs: ai confirm usage\\\"\"}}" | node "$0"' "$G"
+  [ "$status" -eq 0 ]
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"cd x && ai confirm my-change\"}}" | node "$0"' "$G"
+  [ "$status" -eq 2 ]
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"node .ai/../bin/ai.js confirm y\"}}" | node "$0"' "$G"
+  [ "$status" -eq 2 ]
 }

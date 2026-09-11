@@ -36,14 +36,9 @@ switch (cmd) {
   case "sync":
     require("../addons/export-adapters").sync(requireProjectRoot(), args);
     break;
-  case "doctor": {
-    const { execSync } = require("child_process");
-    const has = (c) => { try { execSync(`command -v ${c}`, { stdio: "ignore", shell: true }); return true; } catch { return false; } };
-    console.log(`node: ${process.version}`);
-    console.log(`git:  ${has("git") ? "OK" : "缺失（必需）"}`);
-    console.log(`项目: ${require("../lib/core").findProjectRoot() || "未安装（ai init）"}`);
+  case "doctor":
+    require("../lib/doctor").cmdDoctor();
     break;
-  }
   case "version":
   case "--version":
   case "-v":
