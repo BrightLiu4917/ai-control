@@ -34,6 +34,14 @@ t("scopeItems 提取非 none 条目", () => {
   assert.strictEqual(scopeItems(proposal, "affected_pages"), null); // 字段缺失
 });
 
+t("scopeItems 兼容行内标量与中英文 none（P1-1 回归）", () => {
+  const p2 = "## 影响范围\n```yaml\naffected_tables: none\naffected_apis: GET /api/x\naffected_pages: 无\naffected_files:\n  - None\n  - src/b.go\n```\n";
+  assert.deepStrictEqual(scopeItems(p2, "affected_tables"), []);
+  assert.deepStrictEqual(scopeItems(p2, "affected_apis"), ["GET /api/x"]);
+  assert.deepStrictEqual(scopeItems(p2, "affected_pages"), []);
+  assert.deepStrictEqual(scopeItems(p2, "affected_files"), ["src/b.go"]);
+});
+
 t("isLite 识别级别标记", () => {
   assert.ok(isLite("变更级别: lite\nxx"));
   assert.ok(!isLite("# 提案\n正文提到 lite 不算"));

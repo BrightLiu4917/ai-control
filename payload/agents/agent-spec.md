@@ -18,8 +18,8 @@
 - 需要把聊天需求转成 OpenSpec 事实源。
 - 新功能、接口变更、数据库变更、页面流程、权限、状态流转、重构。
 - 任意不满足简单任务定义的需求。
-- 已有 change 需要补充 proposal、design、tasks 或 specs delta。
-- 实现完成后需要归档到 `openspec/specs/`。
+- 已有 change 需要补充 proposal、design、test-cases 或 specs delta。
+- 实现完成后需要归档到 `.ai/specs/`。
 - 新增、修改或删除接口。
 - 前后端字段契约不清。
 - 分页、排序、筛选、错误码、响应包装不清。
@@ -29,8 +29,8 @@
 
 - `AGENTS.md`
 - `.ai/rules/02-product-ux.md`（产品/交互/文案规范）
-- 相关 `openspec/specs/`
-- 相关 `openspec/changes/`
+- 相关 `.ai/specs/`
+- 相关 `.ai/changes/`
 - `.ai/rules/20-api.md`
 - `.ai/rules/24-openapi.md`，如涉及 Swagger/OpenAPI 文档
 - `.ai/rules/22-rbac.md`，如涉及后台权限接口
@@ -65,18 +65,17 @@
 3. 创建或完善：
 
 ```text
-openspec/changes/<change-id>/
+.ai/changes/<change-id>/
 ├── proposal.md
-├── design.md
-├── tasks.md
-└── specs/<capability>/spec.md
+├── test-cases.md（验收契约，与 proposal 一起经用户确认）
+├── specs/<change-id>/spec.md（完整变更）
+└── design.md（涉及跨模块/数据库/接口兼容时按需补建）
 ```
 
 4. `proposal.md` 必须使用中文标题，写项目背景、项目目标、变更内容、非目标、影响范围、风险和待确认问题。
 5. 涉及跨模块、数据库、接口、UI、状态流或架构取舍时写 `design.md`。
-6. `tasks.md` 必须可执行、可验证，并包含优先级、状态、负责人、预计工时和验收标准。
-7. specs delta 只能写已确认规则。
-8. 用户确认前禁止实现。
+6. specs delta 只能写已确认规则。
+7. 用户确认前禁止实现；用户确认后运行 `ai confirm <change-id>` 写入留痕。
 
 ### 待确认问题格式
 
@@ -97,18 +96,18 @@ openspec/changes/<change-id>/
 ### 执行 change
 
 1. 确认用户已批准 change。
-2. 按 `tasks.md` 识别任务类型。
+2. 按 proposal 的变更内容拆出任务并识别类型。
 3. 涉及 DB 先走数据库工程师（`agent-dba`）。
 4. 涉及 API 先走 产品规格工程师（`agent-spec`）。
 5. 涉及 UI/交互先走 开发工程师（`agent-dev`）。
 6. 涉及后端实现走 开发工程师（`agent-dev`）。
 7. 涉及前端实现走 开发工程师（`agent-dev`）。
 8. 每次只实施最小可验证切片。
-9. 实现后更新任务状态和验证结果。
+9. 实现后在交付说明中记录验证结果（不维护状态表格）。
 
 ### 归档
 
-实现和验证完成后，把已确认行为归档到 `openspec/specs/`。归档只能记录最终真实行为，不记录废弃方案或未确认建议。
+实现和验证完成后，把已确认行为归档到 `.ai/specs/`。归档只能记录最终真实行为，不记录废弃方案或未确认建议。
 
 
 ## API 契约
@@ -124,7 +123,7 @@ openspec/changes/<change-id>/
 7. 检查响应结构、VO、敏感字段和兼容性。
 8. 检查前端调用方和后端实现影响。
 9. 涉及字段或 SQL 时转数据库工程师（`agent-dba`）。
-10. 涉及后端实现时转对应后端开发工程师（`agent-dev` / `agent-dev` / `agent-dev`）。
+10. 涉及后端实现时转对应后端开发工程师（`agent-dev`，按栈读对应手册）。
 11. 涉及前端实现时转 开发工程师（`agent-dev`）。
 
 
@@ -158,7 +157,6 @@ openspec/changes/<change-id>/
 - change 路径。
 - proposal 摘要。
 - design 摘要。
-- tasks 摘要。
 - specs delta 摘要。
 - 待确认问题。
 - 下一步中文角色路由。

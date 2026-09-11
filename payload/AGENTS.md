@@ -11,7 +11,7 @@
 
 ## 两个必须等用户点头的确认点
 
-1. **change 确认**：proposal + test-cases 未经用户确认，禁止写任何业务代码。
+1. **change 确认**：proposal + test-cases 未经用户确认，禁止写任何业务代码；用户点头后运行 `ai confirm <id>` 留痕（ship 门禁的前置，确认后再改 proposal/test-cases 即失效须重确认）。
 2. **数据库确认**：涉及表结构/字段/索引/迁移时，先输出表结构设计审查，确认后再输出变更确认包（含目标 DDL、回滚 SQL、联动清单），再次确认后才能执行 SQL 或写 migration。DROP/TRUNCATE 前默认备份（`原表名_copy_yyyyMMdd`）。完整细则见 `.ai/rules/10-db-schema.md`。
 
 ## 任务分级
@@ -24,11 +24,11 @@
 
 ```text
 用户提需求 → 影响探测（检索代码，列出触碰的文件/表/接口）→ 判级（证据判级，拿不准判高一级）
-→ ai new 建骨架 → 补全 proposal + test-cases → ai check → 确认单标注级别与理由，等用户确认
+→ ai new 建骨架 → 补全 proposal + test-cases → ai check → 确认单标注级别与理由，等用户确认 → ai confirm 留痕
 → 实现（最小切片）→ ai test → ai ship（证据门禁秒级）→ 交付
 ```
 
-- 用户说"测一下"→ `ai test <id>`；"能上线吗/发布"→ `ai ship <id>`；"表加字段"→ 走数据库确认。
+- 用户说"测一下"→ `ai test`；"能上线吗/发布"→ `ai ship <id>`；"表加字段"→ 走数据库确认。
 - 用户明说小/大需求时尊重其判级，门禁照常。
 
 ## 验收契约
@@ -42,7 +42,7 @@
 
 按任务读取对应手册，对用户使用中文角色名：
 
-- 产品规格工程师 `.ai/agents/agent-spec.md`：需求澄清、架构影响、OpenSpec、API 契约。非简单任务必先经过。
+- 产品规格工程师 `.ai/agents/agent-spec.md`：需求澄清、架构影响、变更规格、API 契约。非简单任务必先经过。
 - 数据库工程师 `.ai/agents/agent-dba.md`：表结构、SQL、迁移回滚、两阶段确认。碰 DB 必先经过。
 - 开发工程师 `.ai/agents/agent-dev.md`：全部实现；按栈读 `.ai/agents/dev/` 对应手册与 `.ai/rules/` 栈规则。
 - 测试工程师 `.ai/agents/agent-test.md`：设计期写验收用例，实现后按报告核对证据。
@@ -59,4 +59,4 @@
 
 ## 交付输出
 
-只列实际发生变化的项（有 SQL 必附回滚；有手动用例必逐条报告结果）；无变化的项不写"无"占位。大型功能建议归档已确认行为到 `openspec/specs/`，中小变更不强制。
+只列实际发生变化的项（有 SQL 必附回滚；有手动用例必逐条报告结果）；无变化的项不写"无"占位。大型功能建议归档已确认行为到 `.ai/specs/`，中小变更不强制。

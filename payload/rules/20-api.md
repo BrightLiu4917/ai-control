@@ -114,7 +114,7 @@ POST body：
 | 禁用 | `disable` | POST |
 
 ## API 契约位置
-- API 事实源必须先进入 `openspec/changes/<change-id>/`。
+- API 事实源必须先进入 `.ai/changes/<change-id>/`。
 - `api-contracts/` 只用于把已确认或待确认的接口细节展开成便于前后端联调的文档。
 - `api-contracts/` 不得与 OpenSpec 写两套冲突规则。
 - 如果两者不一致，以 OpenSpec 中已确认的 `spec.md` 和用户确认记录为准，并立即同步 `api-contracts/`。

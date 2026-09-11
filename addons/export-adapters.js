@@ -45,19 +45,19 @@ function sync(root, args) {
 
   // 3. .claude/skills/
   const skills = {
-    "openspec-feature": ["为新功能创建 change 骨架。用户说“加个XX”“帮我做XX”“改一下XX”等提出需求时使用；先影响探测判级（lite/完整）。",
-      "# 新功能流程\n\n1. 与用户确认 change-id（小写中横线）。\n2. 运行 `ai new <id>`（小需求 `--lite`）。\n3. 按产品规格工程师手册补全 proposal 与验收用例，答掉待确认问题。\n4. `ai check <id>` 通过后，输出带级别与判级理由的确认单，等用户确认。\n"],
-    "openspec-ready": ["校验 change 是否可请求确认。用户说“检查一下”“可以确认了吗”时使用。",
-      "# 就绪校验\n\n运行 `ai check <id>`；失败逐项修复后重跑，通过后向用户输出确认单。\n"],
+    "new-feature": ["为新功能创建 change 骨架。用户说“加个XX”“帮我做XX”“改一下XX”等提出需求时使用；先影响探测判级（lite/完整）。",
+      "# 新功能流程\n\n1. 与用户确认 change-id（小写中横线）。\n2. 运行 `ai new <id>`（小需求 `--lite`）。\n3. 按产品规格工程师手册补全 proposal 与验收用例，答掉待确认问题。\n4. `ai check <id>` 通过后，输出带级别与判级理由的确认单，等用户确认。\n5. 用户确认后运行 `ai confirm <id>` 写入确认留痕（ship 的前置）。\n"],
+    "ready-check": ["校验 change 是否可请求确认。用户说“检查一下”“可以确认了吗”时使用。",
+      "# 就绪校验\n\n运行 `ai check <id>`；失败逐项修复后重跑，通过后向用户输出确认单；用户点头后运行 `ai confirm <id>`。\n"],
     "release-ship": ["发布门禁。用户说“测一下”“能上线吗”“发布”时使用。",
-      "# 发布流程\n\n1. `ai test <id>` 跑测试（JUnit 报告即证据）。\n2. `ai ship <id>` 过证据门禁。\n3. 按 `.ai/rules/53-release.md` 清单过与本次变更相关的项。\n4. 高风险变更建议在新会话用 `.ai/templates/review-prompt.md` 做独立审查。\n"],
+      "# 发布流程\n\n1. `ai test` 跑测试（JUnit 报告即证据，可输出到 test-results/<change-id>/ 与其他变更隔离）。\n2. `ai ship <id>` 过证据门禁。\n3. 按 `.ai/rules/53-release.md` 清单过与本次变更相关的项。\n4. 高风险变更建议在新会话用 `.ai/templates/review-prompt.md` 做独立审查。\n"],
   };
   for (const [name, [desc, body]] of Object.entries(skills)) {
     write(path.join(root, ".claude", "skills", name, "SKILL.md"), `---\nname: ${name}\ndescription: ${desc}\n---\n\n${body}`);
   }
 
   // 4. workbuddy-skills/（自包含：内嵌被引用的 rules 与 dev 栈手册快照）
-  const NOTE = "\n\n---\n\n# 附录：内嵌快照\n\n> 本技能自包含；框架更新后需重跑 `ai sync --force` 并重新复制到 ~/.workbuddy/skills/。\n> 正文中的命令仅在安装了控制系统的项目内可执行。\n\n";
+  const NOTE = "\n\n---\n\n# 附录：内嵌快照\n\n> 本技能自包含；框架更新后需重跑 `ai sync --force` （项目级技能就地生效）。\n> 正文中的命令仅在安装了控制系统的项目内可执行。\n\n";
   const embed = (content) => {
     const refs = [...new Set([...content.matchAll(/\.ai\/(rules\/[0-9A-Za-z._-]+\.md|agents\/dev\/[a-z]+\.md)/g)].map((m) => m[1]))];
     const parts = refs
@@ -68,20 +68,20 @@ function sync(root, args) {
   };
 
   const contract = fs.readFileSync(path.join(root, "AGENTS.md"), "utf8");
-  write(path.join(root, "workbuddy-skills", "ai-control-contract", "SKILL.md"),
-    `---\nname: ai-control-contract\ndescription: AI 全栈控制系统总契约：红线、两个确认点、任务分级、验收契约。本项目任何开发任务前必须先应用。\nversion: 2.0.0\ntags: contract, openspec, workflow\n---\n\n${embed(contract)}`);
+  write(path.join(root, ".workbuddy", "skills", "ai-control-contract", "SKILL.md"),
+    `---\nname: ai-control-contract\ndescription: AI 全栈控制系统总契约：红线、两个确认点、任务分级、验收契约。在装有本控制系统的项目内开发时必须先应用。\nversion: 2.0.0\ntags: contract, workflow, gates\n---\n\n${embed(contract)}`);
   for (const f of agentFiles) {
     const content = fs.readFileSync(path.join(agentsDir, f), "utf8");
     const id = f.replace(/\.md$/, "");
     const role = (content.match(/^# ([^（\n]+)/) || [, id])[1].trim();
     const duty = firstLine(sec(content, "职责"));
-    write(path.join(root, "workbuddy-skills", id, "SKILL.md"),
+    write(path.join(root, ".workbuddy", "skills", id, "SKILL.md"),
       `---\nname: ${id}\ndescription: ${role}。${duty}\nversion: 2.0.0\ntags: ai-control, ${id.replace("agent-", "")}\n---\n\n${embed(content)}`);
   }
 
   console.log(`SYNC_OK written=${written.length} skipped=${skipped.length}`);
   written.forEach((p) => console.log(`  + ${p}`));
-  console.log("WorkBuddy：复制 workbuddy-skills/ 下目录到 ~/.workbuddy/skills/ 后重启。Codex/Cursor/Kimi/Qoder 原生读 AGENTS.md 无需操作。");
+  console.log("WorkBuddy：项目级技能已写入 .workbuddy/skills/，重启 WorkBuddy 生效（无需复制；若曾装过 v1 全局技能，请从 ~/.workbuddy/skills/ 删除 agent-architect/agent-release 等残留）。Codex/Cursor/Kimi/Qoder 原生读 AGENTS.md 无需操作。");
 }
 
 module.exports = { sync };

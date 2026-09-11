@@ -34,6 +34,7 @@ const FORBIDDEN = [
   "CONTEXT-MAP.md",
   "TASK_TEMPLATE.md",
   "AGENT_ROUTING",
+  "openspec/", // 目录已迁移到 .ai/changes 与 .ai/specs
 ];
 
 for (const file of mdFiles(PAYLOAD)) {
@@ -49,7 +50,7 @@ for (const file of mdFiles(PAYLOAD)) {
 
   // 2. .ai/ 路径必须在 payload 中真实存在（文件或目录）
   // 运行时由 ai init 生成、不随 payload 分发的文件
-  const RUNTIME_OK = [".ai/config.json", ".ai/backup"];
+  const RUNTIME_OK = [".ai/config.json", ".ai/backup", ".ai/changes", ".ai/specs"];
   for (const m of text.matchAll(/\.ai\/[\w./一-龥-]+/g)) {
     const ref = m[0].replace(/[。，、；：)）\]】]+$/, ""); // 去掉句尾标点
     if (RUNTIME_OK.some((ok) => ref.startsWith(ok))) continue;

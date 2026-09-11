@@ -40,10 +40,10 @@ install_here() {
 
   rm "$PROJ/AGENTS.md"
   install_here
-  mkdir -p "$PROJ/openspec/changes/keep" && echo "用户数据" > "$PROJ/openspec/changes/keep/proposal.md"
+  mkdir -p "$PROJ/.ai/changes/keep" && echo "用户数据" > "$PROJ/.ai/changes/keep/proposal.md"
   run $AI init --update
   [ "$status" -eq 0 ]
-  [ "$(cat "$PROJ/openspec/changes/keep/proposal.md")" = "用户数据" ]
+  [ "$(cat "$PROJ/.ai/changes/keep/proposal.md")" = "用户数据" ]
   ls "$PROJ/.ai/backup/" | grep -q 'update-'
 }
 
@@ -53,13 +53,13 @@ install_here() {
   install_here
   run $AI new fix-text --lite
   [ "$status" -eq 0 ]
-  [ -f "$PROJ/openspec/changes/fix-text/proposal.md" ]
-  [ -f "$PROJ/openspec/changes/fix-text/test-cases.md" ]
-  [ ! -f "$PROJ/openspec/changes/fix-text/tasks.md" ]
-  grep -q '^变更级别: lite' "$PROJ/openspec/changes/fix-text/proposal.md"
+  [ -f "$PROJ/.ai/changes/fix-text/proposal.md" ]
+  [ -f "$PROJ/.ai/changes/fix-text/test-cases.md" ]
+  [ ! -f "$PROJ/.ai/changes/fix-text/tasks.md" ]
+  grep -q '^变更级别: lite' "$PROJ/.ai/changes/fix-text/proposal.md"
 
   # 模拟 AI 补全：影响文件 + 一条手动用例 + 答掉待确认
-  python3 - "$PROJ/openspec/changes/fix-text" <<'PY'
+  python3 - "$PROJ/.ai/changes/fix-text" <<'PY'
 import sys, re
 d = sys.argv[1]
 p = open(f"{d}/proposal.md", encoding="utf-8").read()
@@ -73,6 +73,8 @@ open(f"{d}/test-cases.md", "w", encoding="utf-8").write(t)
 PY
   run $AI check fix-text
   [ "$status" -eq 0 ]
+  run $AI confirm fix-text
+  [ "$status" -eq 0 ]
   run $AI ship fix-text
   [ "$status" -eq 0 ]
   grep -q 'SHIP_GATES_PASSED' <<<"$output"
@@ -83,8 +85,8 @@ PY
 
 full_change_fixture() {
   install_here
-  mkdir -p "$PROJ/openspec/changes/order-export"
-  cat > "$PROJ/openspec/changes/order-export/proposal.md" <<'EOF'
+  mkdir -p "$PROJ/.ai/changes/order-export"
+  cat > "$PROJ/.ai/changes/order-export/proposal.md" <<'EOF'
 # 变更提案：order-export
 ## 影响范围
 ```yaml
@@ -100,7 +102,7 @@ affected_pages:
 ## 待确认问题
 - 无待确认
 EOF
-  cat > "$PROJ/openspec/changes/order-export/test-cases.md" <<'EOF'
+  cat > "$PROJ/.ai/changes/order-export/test-cases.md" <<'EOF'
 | 用例ID | 关联场景 | 类型 | 前置条件 | 步骤 | 预期结果 | 验证方式 |
 |--------|----------|------|----------|------|----------|----------|
 | TC-01 | 导出 | 正常流 | 有数据 | 调导出 | 返回文件 | 集成 |
@@ -110,6 +112,8 @@ EOF
 
 @test "完整变更：报告齐全且全绿 → ship 过；缺 TC/有失败 → 拦" {
   full_change_fixture
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
   mkdir -p "$PROJ/test-results"
 
   # 只有 TC-01 → MISSING 拦截
@@ -148,7 +152,7 @@ EOF
 
 @test "affected_apis 非 none 而用例缺异常流 → check 拦截" {
   full_change_fixture
-  python3 - "$PROJ/openspec/changes/order-export/test-cases.md" <<'PY'
+  python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
 import sys
 p = sys.argv[1]
 s = open(p, encoding="utf-8").read().replace("异常流", "正常流")
@@ -164,7 +168,7 @@ PY
 @test "lite 声明数据库 → check 拦并指向 --upgrade；升级保留已写内容" {
   install_here
   $AI new tiny --lite >/dev/null
-  python3 - "$PROJ/openspec/changes/tiny/proposal.md" <<'PY'
+  python3 - "$PROJ/.ai/changes/tiny/proposal.md" <<'PY'
 import sys
 p = sys.argv[1]
 s = open(p, encoding="utf-8").read()
@@ -172,22 +176,24 @@ s = s.replace("affected_tables:\n  - none", "affected_tables:\n  - t_user")
 s = s.replace("- （补全：影响的文件）", "- src/a.java")
 open(p, "w", encoding="utf-8").write(s)
 PY
-  echo "我的用例内容" >> "$PROJ/openspec/changes/tiny/test-cases.md"
+  echo "我的用例内容" >> "$PROJ/.ai/changes/tiny/test-cases.md"
   run $AI check tiny
   [ "$status" -ne 0 ]
   grep -q 'upgrade' <<<"$output"
 
   run $AI new tiny --upgrade
   [ "$status" -eq 0 ]
-  ! grep -q '^变更级别: lite' "$PROJ/openspec/changes/tiny/proposal.md"
-  grep -q '我的用例内容' "$PROJ/openspec/changes/tiny/test-cases.md"
-  [ -f "$PROJ/openspec/changes/tiny/specs/tiny/spec.md" ]
+  ! grep -q '^变更级别: lite' "$PROJ/.ai/changes/tiny/proposal.md"
+  grep -q '我的用例内容' "$PROJ/.ai/changes/tiny/test-cases.md"
+  [ -f "$PROJ/.ai/changes/tiny/specs/tiny/spec.md" ]
 }
 
 # ── 5. 高风险提示（v1 曾经的误报场景）─────────────────────
 
 @test "碰表提示独立审查；tables=none 不误报" {
   full_change_fixture
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
   mkdir -p "$PROJ/test-results"
   cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
 <?xml version="1.0"?>
@@ -202,13 +208,16 @@ EOF
   ! grep -q '数据库' <<<"$output"
 
   # 改为碰表：提示建议独立审查（review-prompt 模板路径）
-  python3 - "$PROJ/openspec/changes/order-export/proposal.md" <<'PY'
+  python3 - "$PROJ/.ai/changes/order-export/proposal.md" <<'PY'
 import sys
 p = sys.argv[1]
 s = open(p, encoding="utf-8").read()
 s = s.replace("affected_tables:\n  - none", "affected_tables:\n  - t_order")
 open(p, "w", encoding="utf-8").write(s)
 PY
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  touch "$PROJ/test-results/TEST-a.xml"
   run $AI ship order-export
   [ "$status" -eq 0 ]
   grep -q '独立审查' <<<"$output"
@@ -219,7 +228,7 @@ PY
 @test "待确认问题未答 → check 拦；正文出现'待确认'字样不拦" {
   install_here
   $AI new q-test --lite >/dev/null
-  python3 - "$PROJ/openspec/changes/q-test" <<'PY'
+  python3 - "$PROJ/.ai/changes/q-test" <<'PY'
 import sys, re
 d = sys.argv[1]
 p = open(f"{d}/proposal.md", encoding="utf-8").read()
@@ -236,7 +245,7 @@ PY
   [ "$status" -eq 0 ]
 
   # 加一条未答问题 → 拦
-  printf -- '- 状态枚举有哪几个值？\n' >> "$PROJ/openspec/changes/q-test/proposal.md"
+  printf -- '- 状态枚举有哪几个值？\n' >> "$PROJ/.ai/changes/q-test/proposal.md"
   run $AI check q-test
   [ "$status" -ne 0 ]
   grep -q '待确认' <<<"$output"
@@ -250,10 +259,10 @@ PY
   [ "$status" -eq 0 ]
   grep -q '@AGENTS.md' "$PROJ/CLAUDE.md"
   [ "$(ls "$PROJ/.claude/agents/" | wc -l | tr -d ' ')" -eq 4 ]
-  [ -f "$PROJ/.claude/skills/openspec-feature/SKILL.md" ]
-  [ "$(ls "$PROJ/workbuddy-skills/" | wc -l | tr -d ' ')" -eq 5 ]
-  grep -q '规则快照' "$PROJ/workbuddy-skills/agent-dba/SKILL.md"
-  grep -q 'pk_id' "$PROJ/workbuddy-skills/agent-dba/SKILL.md"
+  [ -f "$PROJ/.claude/skills/new-feature/SKILL.md" ]
+  [ "$(ls "$PROJ/.workbuddy/skills/" | wc -l | tr -d ' ')" -eq 5 ]
+  grep -q '规则快照' "$PROJ/.workbuddy/skills/agent-dba/SKILL.md"
+  grep -q 'pk_id' "$PROJ/.workbuddy/skills/agent-dba/SKILL.md"
 }
 
 # ── 8. 外部审计第一批修复的回归 ─────────────────────────────
@@ -274,4 +283,78 @@ PY
   [ "$status" -ne 0 ]
   grep -q 'mixed' <<<"$output"                # 报错需列出可用值
   [ ! -d "$PROJ/.ai" ]                        # 未留下半安装状态
+}
+
+# ── 9. 外部审计第二批修复的回归 ─────────────────────────────
+
+@test "P0-1: 碰接口却全手动用例 → check 拦（升级绕过被堵）" {
+  full_change_fixture
+  python3 - "$PROJ/.ai/changes/order-export/test-cases.md" <<'PY'
+import sys
+p = sys.argv[1]
+s = open(p, encoding="utf-8").read().replace("| 集成 |", "| 手动 |").replace("| 单测 |", "| 手动 |")
+open(p, "w", encoding="utf-8").write(s)
+PY
+  run $AI check order-export
+  [ "$status" -ne 0 ]
+  grep -q '非手动' <<<"$output"
+}
+
+@test "confirm 门禁：未确认不能 ship；确认后偷改变更单 → 确认失效" {
+  full_change_fixture
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
+<?xml version="1.0"?>
+<testsuite tests="2">
+  <testcase classname="T" name="test_TC01_ok"/>
+  <testcase classname="T" name="test_TC02_ok"/>
+</testsuite>
+EOF
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q 'confirm' <<<"$output"               # 未确认 → 拦并指路
+
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  [ -f "$PROJ/.ai/changes/order-export/confirmed.json" ]
+  sleep 1 && touch "$PROJ/test-results/TEST-a.xml"
+  run $AI ship order-export
+  [ "$status" -eq 0 ]                          # 确认 + 新报告 → 过
+
+  sleep 1 && echo "偷改" >> "$PROJ/.ai/changes/order-export/proposal.md"
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q '确认已过期' <<<"$output"            # 确认后改动 → 失效
+}
+
+@test "P0-2: 旧报告顶包 → ship 拦（报告须晚于确认时间）" {
+  full_change_fixture
+  mkdir -p "$PROJ/test-results"
+  cat > "$PROJ/test-results/TEST-a.xml" <<'EOF'
+<?xml version="1.0"?>
+<testsuite tests="2">
+  <testcase classname="T" name="test_TC01_ok"/>
+  <testcase classname="T" name="test_TC02_ok"/>
+</testsuite>
+EOF
+  touch -t 202001010000 "$PROJ/test-results/TEST-a.xml"   # 报告造旧
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+  run $AI ship order-export
+  [ "$status" -ne 0 ]
+  grep -q '旧报告' <<<"$output"
+}
+
+@test "P1-1: 行内 YAML（affected_tables: none）不再误伤" {
+  full_change_fixture
+  python3 - "$PROJ/.ai/changes/order-export/proposal.md" <<'PY'
+import sys
+p = sys.argv[1]
+s = open(p, encoding="utf-8").read()
+s = s.replace("affected_tables:\n  - none", "affected_tables: none")
+s = s.replace("affected_pages:\n  - none", "affected_pages: 无")
+open(p, "w", encoding="utf-8").write(s)
+PY
+  run $AI check order-export
+  [ "$status" -eq 0 ]
 }

@@ -3,7 +3,7 @@
 ## 业务规则
 
 ## 必须沉淀到 OpenSpec
-以下内容必须进入 `openspec/specs/<capability>/spec.md`：
+以下内容必须进入 `.ai/specs/<capability>/spec.md`：
 - 领域对象
 - 字段含义
 - 枚举值
