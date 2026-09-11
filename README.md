@@ -33,7 +33,8 @@ AI：（实现 → 跑测试）测试报告 4 条全绿，ai ship 发布检查�
 
 ```bash
 # 1. 装工具（一次性）
-npm install -g github:BrightLiu4917/ai-control
+npm install -g @brightliu/ai-control
+# 网络装不了 npm 官方源时的备选：npm install -g github:BrightLiu4917/ai-control
 
 # 2. 装进你的项目
 cd 你的项目
