@@ -24,7 +24,7 @@ AI：好的！（编了个 status=5 的枚举值，顺手改了表结构，最�
 AI：我先看了代码。这个需求要动 t_order 表，属于高风险变更。
     这是变更单：改什么、动哪张表、验收标准是这 4 条测试用例。确认吗？
 你：确认
-AI：（实现 → 跑测试）测试报告 4 条全绿，发布检查通过。表结构变更的回滚 SQL 在这里。
+AI：（实现 → 跑测试）测试报告 4 条全绿，ai ship 发布检查通过。表结构变更的回滚 SQL 在这里。
 ```
 
 你全程只做两件事：**确认变更单、确认数据库改动**。其他检查（用例覆盖没覆盖、测试真跑没跑、SQL 危不危险）由内置的自动检查完成——AI 骗不过程序。
@@ -38,18 +38,18 @@ npm install -g github:BrightLiu4917/ai-control
 # 2. 装进你的项目
 cd 你的项目
 ai init                  # 自动识别技术栈；也可指定 --stack java|go|php|vue|react
-ai sync                  # 用 Claude Code 或 WorkBuddy 才需要这步
+ai sync                  # 只有用 Claude Code / WorkBuddy 才需要：为它们生成各自格式的配置文件
 
 # 3. 开始干活——两种用法任选
 ```
 
-**用法 A（推荐）：在 AI 工具里说人话。** 装完后 Codex/Cursor/Kimi/Qoder 自动生效，直接提需求即可，AI 自己走流程。
+**用法 A（推荐）：在 AI 工具里说人话。** 直接提需求，AI 会自己执行下面这 4 个命令并替你补全变更单——你只负责在确认点点头。用法 B 是同一套流程的手动入口，两者随时混用。
 
 **用法 B：终端命令。** 一共 4 个：
 
 | 命令 | 干什么 | 人话 |
 |---|---|---|
-| `ai new 名字` | 建变更单（proposal + 测试用例两个文件） | "我要开工了"（小事加 `--lite`） |
+| `ai new 名字` | 生成变更单骨架（需求说明 + 验收用例两个文件，由 AI 补全内容、你来确认） | "我要开工了"（小事加 `--lite`） |
 | `ai check 名字` | 检查变更单写全没有 | "能给用户确认了吗" |
 | `ai test` | 跑你项目自己的测试 | "跑测试" |
 | `ai ship 名字` | 核对测试报告，全绿放行 | "能交付了吗"（秒级出结果） |
@@ -65,8 +65,8 @@ ai sync                  # 用 Claude Code 或 WorkBuddy 才需要这步
 | 工具 | 需要做什么 |
 |---|---|
 | Codex / Cursor / Kimi Code / Qoder | **装完即用**（它们自动读 AGENTS.md） |
-| Claude Code | `ai sync` 一次（额外获得角色自动切换 + 说人话触发流程） |
-| WorkBuddy | `ai sync` 后把 `workbuddy-skills/` 复制到 `~/.workbuddy/skills/` 重启 |
+| Claude Code | `ai sync` 一次——它不读 AGENTS.md，sync 会生成它专用的 CLAUDE.md 和角色配置（Claude 会按任务自动切换到"数据库工程师"等专家角色） |
+| WorkBuddy（腾讯 AI 办公助手） | `ai sync` 后把生成的 `workbuddy-skills/` 复制到 `~/.workbuddy/skills/` 重启；不用它可忽略 |
 
 多语言混合项目（如 Java 后端 + Vue 前端）装一次即可：AI 按任务碰到的文件自动选对应规则；测试命令在 `.ai/config.json` 里配一条串联命令。
 
@@ -75,7 +75,7 @@ ai sync                  # 用 Claude Code 或 WorkBuddy 才需要这步
 ```text
 你的项目/
 ├── AGENTS.md        规矩总纲（63 行）——AI 工具自动读取
-├── openspec/        你的变更单记录（每个需求一个文件夹）
+├── openspec/        变更单记录，每个需求一个文件夹（目录名沿用开源规格管理惯例 OpenSpec，兼容其生态）
 └── .ai/             规则库和角色手册——AI 按需查阅，你不用打开
 ```
 
