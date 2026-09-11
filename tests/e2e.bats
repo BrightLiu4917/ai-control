@@ -358,3 +358,52 @@ PY
   run $AI check order-export
   [ "$status" -eq 0 ]
 }
+
+# ── 10. 第三批：hooks 前移与团队门禁 ────────────────────────
+
+@test "sync 生成 PreToolUse 钩子配置；guard-bash 拦危险 SQL、放行安全命令" {
+  install_here
+  run $AI sync
+  [ "$status" -eq 0 ]
+  grep -q 'guard-write' "$PROJ/.claude/settings.json"
+  [ -f "$PROJ/.ai/hooks/guard-bash.js" ]
+
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"mysql -e \\\"DROP TABLE t_user\\\"\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-bash.js"
+  [ "$status" -eq 2 ]
+  grep -q '两阶段确认' <<<"$output"
+
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"UPDATE t_user SET x=1\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-bash.js"
+  [ "$status" -eq 2 ]
+
+  run bash -c 'echo "{\"tool_input\":{\"command\":\"git status && UPDATE t_user SET x=1 WHERE id=3\"}}" | node "$0"' "$PROJ/.ai/hooks/guard-bash.js"
+  [ "$status" -eq 0 ]
+}
+
+@test "guard-write：未确认拦业务代码；确认后只放行影响范围内文件" {
+  full_change_fixture
+  cd "$PROJ"
+  G="$PROJ/.ai/hooks/guard-write.js"
+
+  # 有变更但未确认 → 拦业务代码；放行文档
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/OrderController.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 2 ]
+  grep -q '未确认' <<<"$output"
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"README.md\"}}" | node "$0"' "$G"
+  [ "$status" -eq 0 ]
+
+  run $AI confirm order-export
+  [ "$status" -eq 0 ]
+
+  # 确认后：范围内放行，范围外拦截，测试文件放行
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/OrderController.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 0 ]
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/PayService.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 2 ]
+  grep -q 'affected_files' <<<"$output"
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/test/OrderTest.java\"}}" | node "$0"' "$G"
+  [ "$status" -eq 0 ]
+
+  # 逃生阀
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"src/PayService.java\"}}" | AI_CONTROL_HOOKS=off node "$0"' "$G"
+  [ "$status" -eq 0 ]
+}

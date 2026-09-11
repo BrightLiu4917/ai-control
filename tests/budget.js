@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, "..");
 
 const BUDGETS = [
   { name: "内核 JS（bin/ + lib/）", glob: ["bin", "lib"], ext: ".js", max: 1500 },
-  { name: "addons JS", glob: ["addons"], ext: ".js", max: 600 },
+  { name: "addons JS（含 payload/hooks）", glob: ["addons", "payload/hooks"], ext: ".js", max: 600 },
   { name: "AGENTS.md 契约", file: "payload/AGENTS.md", max: 100 },
   { name: "文档份数（根 *.md）", docsMax: 1 },
 ];

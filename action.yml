@@ -1,0 +1,35 @@
+name: "ai-control gates"
+description: "在 PR/CI 上运行 ai-control 门禁：check（契约合规）或 ship（确认留痕 + 测试证据）"
+branding:
+  icon: "shield"
+  color: "blue"
+inputs:
+  mode:
+    description: "check（契约门禁，默认）或 ship（证据门禁，需先跑测试产出 JUnit 报告）"
+    default: "check"
+  change:
+    description: "change-id；或 all = .ai/changes/ 下全部变更"
+    default: "all"
+runs:
+  using: "composite"
+  steps:
+    - name: 运行门禁
+      shell: bash
+      run: |
+        set -euo pipefail
+        AI="node ${{ github.action_path }}/bin/ai.js"
+        if [ ! -d .ai/changes ]; then
+          echo "未安装 ai-control（缺 .ai/changes/），跳过门禁。"; exit 0
+        fi
+        if [ "${{ inputs.change }}" = "all" ]; then
+          ids=$(ls .ai/changes 2>/dev/null || true)
+        else
+          ids="${{ inputs.change }}"
+        fi
+        if [ -z "$ids" ]; then echo "无变更单，跳过门禁。"; exit 0; fi
+        fail=0
+        for id in $ids; do
+          echo "────────── ${{ inputs.mode }} $id ──────────"
+          $AI "${{ inputs.mode }}" "$id" || fail=1
+        done
+        exit $fail

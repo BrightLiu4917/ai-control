@@ -30,8 +30,21 @@ function sync(root, args) {
 @AGENTS.md
 
 - 角色手册已导出为 \`.claude/agents/\` 原生 subagent，匹配任务自动委派。
-- OpenSpec 流程可通过 \`.claude/skills/\` 技能触发。
+- 变更流程可通过 \`.claude/skills/\` 技能触发。
+- PreToolUse 钩子已启用：未确认变更时写业务代码、写影响范围外文件、执行危险 SQL 会被当场拦截（临时停用：AI_CONTROL_HOOKS=off）。
 `);
+
+  // 1.5 .claude/settings.json：PreToolUse 钩子把门禁前移到写入/执行瞬间
+  write(path.join(root, ".claude", "settings.json"), JSON.stringify({
+    hooks: {
+      PreToolUse: [
+        { matcher: "Write|Edit|MultiEdit|NotebookEdit",
+          hooks: [{ type: "command", command: "node .ai/hooks/guard-write.js" }] },
+        { matcher: "Bash",
+          hooks: [{ type: "command", command: "node .ai/hooks/guard-bash.js" }] },
+      ],
+    },
+  }, null, 2) + "\n");
 
   // 2. .claude/agents/
   for (const f of agentFiles) {

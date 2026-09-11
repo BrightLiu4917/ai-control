@@ -66,7 +66,7 @@ ai sync                  # 只有用 Claude Code / WorkBuddy 才需要：为它�
 | 工具 | 需要做什么 |
 |---|---|
 | Codex / Cursor / Kimi Code / Qoder | **装完即用**（它们自动读 AGENTS.md） |
-| Claude Code | `ai sync` 一次——它不读 AGENTS.md，sync 会生成它专用的 CLAUDE.md 和角色配置（Claude 会按任务自动切换到"数据库工程师"等专家角色） |
+| Claude Code | `ai sync` 一次——生成它专用的 CLAUDE.md、角色配置，以及 **PreToolUse 钩子**：未确认就写业务代码、写影响范围外的文件、执行危险 SQL，会在动手的一瞬间被拦下（其他工具是事后检查，Claude Code 是当场按住手） |
 | WorkBuddy（腾讯 AI 办公助手） | `ai sync` 写入项目级 `.workbuddy/skills/`，重启 WorkBuddy 即生效（无需复制）；不用它可忽略 |
 
 多语言混合项目（如 Java 后端 + Vue 前端）装一次即可：AI 按任务碰到的文件自动选对应规则；测试命令在 `.ai/config.json` 里配一条串联命令。
@@ -94,10 +94,29 @@ ai sync                  # 只有用 Claude Code / WorkBuddy 才需要：为它�
 说一句"按控制系统流程来"即可拽回；关键环节（越级偷渡、报告缺失或有失败）有自动检查兜底。诚实说明边界：AI 理论上可以伪造报告文件绕过检查，门禁的作用是把"张嘴谎报"变成"必须留下可查的假证据"——成本和暴露风险完全不是一个量级。
 
 **Q：测试报告是什么格式？**
-JUnit XML——Maven 自带，Go 用 gotestsum，前端用 jest-junit / Vitest 的 junit reporter，PHP 用 `--log-junit`。测试方法名里带上用例编号（如 `test_TC01_xxx`）即可被核对。多变更并行时把报告输出到 `test-results/<变更名>/` 可互相隔离；报告必须比确认时间新——旧报告顶包会被拦下。
+JUnit XML——`ai test` 会按栈自动搞定：Maven 自带；Go 的输出自动转成报告（零配置，无需 gotestsum）；Vitest 自动注入内置 junit reporter；PHPUnit 自动加 `--log-junit`；仅 Jest 需要 `npm i -D jest-junit`（会提示）。测试方法名里带上用例编号（如 `test_TC01_xxx`）即可被核对。多变更并行时把报告输出到 `test-results/<变更名>/` 可互相隔离；报告必须比确认时间新——旧报告顶包会被拦下。
+
+## 团队用？把门禁挂到 PR 上
+
+个人用时门禁跑在本地；团队用时加一个 GitHub Action，PR 不合规直接挂红叉合不了：
+
+```yaml
+# .github/workflows/ai-gates.yml
+name: ai-gates
+on: pull_request
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: BrightLiu4917/ai-control@main          # 契约门禁（check）
+      # 需要证据门禁时：先跑你的测试产出 JUnit 报告，再加一步
+      # - uses: BrightLiu4917/ai-control@main
+      #   with: { mode: ship }
+```
 
 ## 工程质量
 
-零运行时依赖（只需 Node ≥18.17 + git）；15 个端到端验收测试 + 7 个单元测试 + 规则库引用自检（防悬空引用）；代码量硬预算写进 CI（内核 ≤1500 行、契约 ≤100 行、文档 1 份），超支即红——防止工具本身变臃肿。
+零运行时依赖（只需 Node ≥18.17 + git）；17 个端到端验收测试 + 8 个单元测试 + 规则库引用自检（防悬空引用）；代码量硬预算写进 CI（内核 ≤1500 行、契约 ≤100 行、文档 1 份），超支即红——防止工具本身变臃肿。
 
 前身 [ai-coding-fun](https://github.com/BrightLiu4917/ai-coding-fun)（v1）经 15 批真实项目迭代后彻底重构：5000 行 bash → 600 行 JS，五份文档的流程 → 两份，学习成本压缩到本 README 一页。

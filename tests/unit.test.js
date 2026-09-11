@@ -6,6 +6,7 @@ const path = require("path");
 
 const { scopeItems, isLite } = require("../lib/core");
 const { parseReports } = require("../lib/junit");
+const { parseGoTestOutput, buildJUnitXml } = require("../lib/testrun");
 
 let passed = 0;
 function t(name, fn) {
@@ -93,6 +94,30 @@ t("junit: TC 命名变体 TC01/TC-01/TC_01", () => {
       assert.ok(r.passedIds.has(1) && r.passedIds.has(2) && r.passedIds.has(3));
     }
   );
+});
+
+// ── go test -v 输出 → JUnit（多栈证据注入）──
+t("go 输出解析：PASS/FAIL/SKIP 与子测试", () => {
+  const out = [
+    "=== RUN   TestTC01_Export",
+    "--- PASS: TestTC01_Export (0.01s)",
+    "    --- FAIL: TestTC02_Bad/子用例 (0.00s)",
+    "--- SKIP: TestSkip (0.00s)",
+    "PASS",
+  ].join("\n");
+  const cases = parseGoTestOutput(out);
+  assert.strictEqual(cases.length, 3);
+  assert.deepStrictEqual(cases.map(c => c.status), ["PASS", "FAIL", "SKIP"]);
+  const xml = buildJUnitXml("go", cases);
+  assert.ok(xml.includes('name="TestTC01_Export"'));
+  assert.ok(xml.includes("<failure/>") && xml.includes("<skipped/>"));
+  // 转出的 XML 必须能被自家 ship 解析回来（链路闭环）
+  const os2 = require("os");
+  const d = fs.mkdtempSync(path.join(os2.tmpdir(), "go-"));
+  fs.writeFileSync(path.join(d, "go.xml"), xml);
+  const r = parseReports([d]);
+  assert.ok(r.passedIds.has(1) && !r.passedIds.has(2));
+  assert.strictEqual(r.failures.length, 1);
 });
 
 console.log(`\n${passed} 个单测全部通过。`);
