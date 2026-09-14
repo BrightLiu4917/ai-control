@@ -1,7 +1,7 @@
 {
   "name": "@brightliu/ai-control",
-  "version": "2.2.0",
-  "description": "AGENTS.md 标准之上的中文全栈 AI 工程控制层：规格先行、DB 两阶段确认、证据验收。支持 Codex / Claude Code / Cursor / Kimi / Qoder / WorkBuddy。",
+  "version": "2.2.1",
+  "description": "AGENTS.md 标准之上的中文全栈 AI 工程控制层：规格先行、DB 两阶段确认、证据验收。支持 Codex / Claude Code / Cursor / Kimi / Qoder / Trae / WorkBuddy。",
   "bin": {
     "ai": "bin/ai.js"
   },
