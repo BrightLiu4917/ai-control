@@ -2,7 +2,7 @@
 
 **让 AI 编程助手在你的项目里守规矩的工具。**
 
-你在用 Cursor、Claude Code、Codex、通义 Qoder 这些 AI 写代码时，是不是遇到过：
+你在用 Cursor、Claude Code、Codex、通义 Qoder、字节 Trae 这些 AI 写代码时，是不是遇到过：
 
 - AI **编造**了一个数据库里根本不存在的字段？
 - AI 说"测试通过了"，其实**根本没跑**测试？
@@ -120,7 +120,7 @@ AI 以"小需求"开工、中途发现要动表或接口？门禁直接拦下、
 
 | 工具 | 需要做什么 |
 |---|---|
-| Codex / Cursor / Kimi Code / Qoder | **装完即用**（它们自动读 AGENTS.md） |
+| Codex / Cursor / Kimi Code / Qoder / **Trae** | **装完即用**（它们自动读 AGENTS.md，Trae 还支持模块级嵌套） |
 | Claude Code | `ai sync` 一次——生成它专用的 CLAUDE.md、角色配置，以及 **PreToolUse 钩子**：未确认就写业务代码、写影响范围外的文件、执行危险 SQL，会在动手的一瞬间被拦下（其他工具是事后检查，Claude Code 是当场按住手） |
 | WorkBuddy（腾讯 AI 办公助手） | `ai sync` 写入项目级 `.workbuddy/skills/`，重启 WorkBuddy 即生效（无需复制）；不用它可忽略 |
 
