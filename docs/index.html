@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-control · 演示与文档</title>
+<meta name="description" content="AI 全栈控制系统：变更单确认 + 数据库两阶段确认 + 测试报告即证据。">
+<style>
+  :root { color-scheme: light dark; --bg:#f6f7f9; --fg:#1f2328; --muted:#57606a; --card:#fff; --line:#d8dee4; --brand:#0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --card:#161b22; --line:#30363d; --brand:#4493f8; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--fg);
+    font: 16px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { width: 100%; max-width: 660px; padding: 44px 24px; }
+  .eyebrow { font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: 26px; margin: 14px 0 10px; letter-spacing: -.01em; }
+  .lede { color: var(--muted); margin: 0 0 28px; }
+  a.card {
+    display: block; padding: 16px 18px; margin-bottom: 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); text-decoration: none; color: inherit;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  a.card:hover { border-color: var(--brand); transform: translateY(-1px); }
+  a.card b { display: block; font-size: 15px; margin-bottom: 3px; }
+  a.card span { font-size: 13px; color: var(--muted); }
+  footer { margin-top: 26px; font-size: 13px; color: var(--muted); }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">bright-ai-coding</div>
+  <h1>ai-control · 演示</h1>
+  <p class="lede">
+    让 AI 编程助手守规矩：变更单确认 + 数据库两阶段确认 + 测试报告即证据。
+    六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）装钩子，用的是同一份守卫脚本。
+  </p>
+
+  <a class="card" href="demo.html">
+    <b>真实需求演示页 →</b>
+    <span>「订单列表加导出 CSV」走完整流程：影响探测 → 变更单 → 确认 → 数据库两阶段 → 实现 → 测试 → 交付。
+    另含七条门禁拦截 + 一条软核验的真实输出（逐步动画，可单步/重播）。</span>
+  </a>
+
+  <a class="card" href="install-demo.svg">
+    <b>安装动画 →</b>
+    <span>三条命令装完：<code>npm install</code> → <code>ai init</code> → <code>ai sync</code></span>
+  </a>
+
+  <a class="card" href="https://github.com/BrightLiu4917/ai-control">
+    <b>GitHub 仓库 / 完整 README →</b>
+    <span>安装说明、支持矩阵、命令参考、设计取舍与已知边界</span>
+  </a>
+
+  <footer>页面上所有终端输出都是真实运行捕获，不是手写示意。</footer>
+</div>
+</body>
+</html>

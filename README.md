@@ -17,7 +17,7 @@ ai-control 就是治这四件事的：装进你的项目后，AI 会**先写变�
   <img src="docs/install-demo.svg" alt="安装演示：npm 装工具 → ai init 装进项目 → ai sync 生成 Claude Code / WorkBuddy 适配物" width="880">
 </p>
 
-三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [`docs/demo.html`](docs/demo.html)**（自包含单页，含逐步动画、七条门禁拦截的真实输出，以及确认留痕的两条路径。⚠ GitHub 不渲染 HTML，需 clone 后本地双击打开；下面 README 里已内嵌同一批实录的完整输出）。
+三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [在线演示页](https://brightliu4917.github.io/ai-control/demo.html)**（含逐步动画、七条门禁拦截的真实输出，以及确认留痕的两条路径；也可 clone 后直接打开 `docs/demo.html`）。下面 README 里已内嵌同一批实录的完整输出。
 
 ## 效果对比
 
@@ -122,7 +122,7 @@ AI 以"小需求"开工、中途发现要动表或接口？门禁直接拦下、
 
 ## 一个真实需求走一遍：订单列表加「导出 CSV」
 
-下面每条命令输出都是真跑出来的（演示项目 `order-center`，Java / Spring Boot + Vue）。**七条门禁拦截的完整实录在本节末尾**（点击展开）；逐步动画版见 [`docs/demo.html`](docs/demo.html)——GitHub 不渲染 HTML，那个页面需 clone 后本地打开。
+下面每条命令输出都是真跑出来的（演示项目 `order-center`，Java / Spring Boot + Vue）。**七条门禁拦截的完整实录在本节末尾**（点击展开）；逐步动画版见 [在线演示页](https://brightliu4917.github.io/ai-control/demo.html)。
 
 **需求**：运营每月对账要按客户 + 日期区间导出订单，现在只能用列表页一页页翻（每页 20 条）。
 
