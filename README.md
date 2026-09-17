@@ -2,6 +2,8 @@
 
 **让 AI 编程助手在你的项目里守规矩的工具。**
 
+[English](README.en.md) · **中文**
+
 你在用 Cursor、Claude Code、Codex、通义 Qoder、字节 Trae 这些 AI 写代码时，是不是遇到过：
 
 - AI **编造**了一个数据库里根本不存在的字段？
@@ -123,7 +125,7 @@ npm install -g @brightliu/ai-control
 # 2. 装进你的项目
 cd 你的项目
 ai init                  # 自动识别技术栈；也可指定 --stack java|go|php|vue|react|node|mixed
-ai sync                  # 只有用 Claude Code / WorkBuddy 才需要：为它们生成各自格式的配置文件
+ai sync                  # 为六个 AI 工具生成各自格式的钩子配置（各工具的激活条件见下文对照表）
 
 # 3. 开始干活——两种用法任选
 ```
@@ -483,6 +485,6 @@ jobs:
 
 ## 工程质量
 
-零运行时依赖（只需 Node ≥18.17 + git）；26 个端到端验收测试 + 8 个单元测试 + 规则库引用自检（防悬空引用）；代码量硬预算写进 CI（内核 ≤1500 行、契约 ≤100 行、文档 1 份），超支即红——防止工具本身变臃肿。
+零运行时依赖（只需 Node ≥18.17 + git）；33 个端到端验收测试 + 17 个单元测试 + 规则库引用自检（防悬空引用）；代码量硬预算写进 CI（内核 ≤1500 行、契约 ≤100 行、使用文档 1 份 + README 语言变体 ≤3），超支即红——防止工具本身变臃肿。
 
 前身 [ai-coding-fun](https://github.com/BrightLiu4917/ai-coding-fun)（v1）经 15 批真实项目迭代后彻底重构：5000 行 bash → 600 行 JS，五份文档的流程 → 两份，学习成本压缩到本 README 一页。

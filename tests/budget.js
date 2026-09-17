@@ -11,7 +11,9 @@ const BUDGETS = [
   { name: "内核 JS（bin/ + lib/）", glob: ["bin", "lib"], ext: ".js", max: 1500 },
   { name: "addons JS（含 payload/hooks）", glob: ["addons", "payload/hooks"], ext: ".js", max: 600 },
   { name: "AGENTS.md 契约", file: "payload/AGENTS.md", max: 100 },
-  { name: "使用文档份数（根 *.md，治理文件除外）", docsMax: 1 },
+  // 主文档仍限 1 份；README 的语言变体（README.en.md / README.zh-CN.md …）另计——
+  // 放宽的是「多语言」，不是「多文档」：再往根目录塞一份 USAGE.md 照样超支。
+  { name: "使用文档份数（根 *.md，治理文件除外）", docsMax: 1, langVariantsMax: 3 },
 ];
 
 function countLines(file) {
@@ -31,9 +33,14 @@ let fail = false;
 for (const b of BUDGETS) {
   if (b.docsMax !== undefined) {
     const GOVERNANCE = ["CHANGELOG.md", "SECURITY.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md"]; // 治理文件不算使用文档
-    const docs = fs.readdirSync(ROOT).filter((f) => f.endsWith(".md") && !GOVERNANCE.includes(f));
-    const ok = docs.length <= b.docsMax;
-    console.log(`${ok ? "OK " : "超支"} ${b.name}: ${docs.length}/${b.docsMax} (${docs.join(", ")})`);
+    const all = fs.readdirSync(ROOT).filter((f) => f.endsWith(".md") && !GOVERNANCE.includes(f));
+    const VARIANT = /^README\.[a-z]{2}(-[A-Za-z]{2,4})?\.md$/; // README.en.md 这类语言变体
+    const variants = all.filter((f) => VARIANT.test(f));
+    const docs = all.filter((f) => !VARIANT.test(f));
+    const maxVar = b.langVariantsMax || 0;
+    const ok = docs.length <= b.docsMax && variants.length <= maxVar;
+    const tail = maxVar ? ` + 语言变体 ${variants.length}/${maxVar}${variants.length ? ` (${variants.join(", ")})` : ""}` : "";
+    console.log(`${ok ? "OK " : "超支"} ${b.name}: ${docs.length}/${b.docsMax}${tail} (${docs.join(", ")})`);
     if (!ok) fail = true;
   } else if (b.file) {
     const p = path.join(ROOT, b.file);
