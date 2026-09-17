@@ -17,7 +17,7 @@ ai-control 就是治这四件事的：装进你的项目后，AI 会**先写变�
   <img src="docs/install-demo.svg" alt="安装演示：npm 装工具 → ai init 装进项目 → ai sync 生成 Claude Code / WorkBuddy 适配物" width="880">
 </p>
 
-三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [`docs/demo.html`](docs/demo.html)**（自包含单页，clone 后双击即可，含逐步动画、六条门禁拦截的真实输出，以及确认留痕的两条路径）。
+三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [`docs/demo.html`](docs/demo.html)**（自包含单页，含逐步动画、七条门禁拦截的真实输出，以及确认留痕的两条路径。⚠ GitHub 不渲染 HTML，需 clone 后本地双击打开；下面 README 里已内嵌同一批实录的完整输出）。
 
 ## 效果对比
 
@@ -122,7 +122,7 @@ AI 以"小需求"开工、中途发现要动表或接口？门禁直接拦下、
 
 ## 一个真实需求走一遍：订单列表加「导出 CSV」
 
-下面每条命令输出都是真跑出来的（演示项目 `order-center`，Java / Spring Boot + Vue）。逐步动画与完整六段门禁实录见 [`docs/demo.html`](docs/demo.html)。
+下面每条命令输出都是真跑出来的（演示项目 `order-center`，Java / Spring Boot + Vue）。**七条门禁拦截的完整实录在本节末尾**（点击展开）；逐步动画版见 [`docs/demo.html`](docs/demo.html)——GitHub 不渲染 HTML，那个页面需 clone 后本地打开。
 
 **需求**：运营每月对账要按客户 + 日期区间导出订单，现在只能用列表页一页页翻（每页 20 条）。
 
@@ -171,6 +171,7 @@ $ ai test order-export-csv
 TEST_PASSED（JUnit 报告即验收证据，ai ship 时核对）
 
 $ ai ship order-export-csv
+确认来源：cli（用户本人敲的）
 EVIDENCE_OK：报告 1 份，非手动用例 4 条全部有通过记录。
 提示：本变更涉及数据库，建议在新会话用 .ai/templates/review-prompt.md 做一次独立审查。
 SHIP_GATES_PASSED：门禁全部通过（已写入 shipped.json）。
@@ -178,14 +179,84 @@ SHIP_GATES_PASSED：门禁全部通过（已写入 shipped.json）。
 
 **你在这个需求里只做了两件事**：看一眼确认单说"确认"（约 2 分钟）、数据库两次点头（约 3 分钟）。用例覆盖够不够、报告在不在、有没有失败、有没有密钥——都是命令在查。
 
-**门禁实际拦下来的四种情况**（均为真实输出，完整六段见 [`docs/demo.html`](docs/demo.html)）：
+**门禁实际拦下来的七种情况 + 一条软核验**（均为真实输出）：
 
-| 场景 | 拦下时说的话 |
-|---|---|
-| 还没确认就想交付 | `[FAIL] 变更未确认：向用户输出确认单。终端里由用户敲 ai confirm order-export-csv；GUI/app 场景…代记 ai confirm order-export-csv --attested` |
-| 确认后又偷改变更单 | `[FAIL] 确认已过期：proposal/test-cases/specs 在确认后被修改` |
-| 拿确认之前的旧报告顶包 | `[FAIL] 测试报告早于本变更的确认时间——疑似旧报告` |
-| lite 变更里夹带接口改动 | `[FAIL] lite 变更不允许涉及 API 契约；运行 ai new … --upgrade 升级为完整流程` |
+<details>
+<summary><b>点开看每一条的完整输出</b></summary>
+
+**① 变更单没补全就想让人确认** —— `ai check order-export-csv`
+
+```text
+[FAIL] 待确认问题未答（proposal.md）: 访问控制：本功能的权限要求是什么？
+[FAIL] 待确认问题未答（proposal.md）: 数据表：涉及哪些表/字段/索引？（涉及则必须走数据库两阶段确认）
+[FAIL] 待确认问题未答（proposal.md）: API 契约：路径、请求、响应、分页、错误码？（遵循 rules/20-api.md）
+[FAIL] 待确认问题未答（proposal.md）: 验收标准：最小可验证路径、失败路径、越权场景分别是什么？
+[FAIL] check 未通过（4 项）
+```
+> 门禁只认「## 待确认问题」章节里以 `-` 开头的条目，凡不含"已确认 / 已解决 / 无待确认"的就算未答。**有未答问题就不给出确认单**——这条绕不过去，只能把问题真问清。
+
+**② 还没确认就想交付** —— `ai ship order-export-csv`
+
+```text
+[FAIL] 变更未确认：向用户输出确认单。终端里由用户敲 ai confirm order-export-csv；GUI/app 场景可让用户在对话里回一句同意，再代记 ai confirm order-export-csv --attested
+```
+
+**③ 确认之后又偷改了变更单** —— `ai ship order-export-csv`
+
+```text
+[FAIL] 确认已过期：proposal/test-cases/specs 在确认后被修改；重新向用户确认并运行 ai confirm order-export-csv
+```
+> 判定用**内容哈希**而不是文件时间戳。改一个字，确认即刻失效，得重新找你点头——把"先骗到确认、回头再改范围"堵死。（用 mtime 会在 git clone / 换机器后全体确认假失效，团队场景不可用。）
+
+**④ 拿确认之前的旧报告顶包** —— `ai ship order-export-csv`
+
+```text
+[FAIL] 测试报告早于本变更的确认时间——疑似旧报告；重跑 ai test 后再 ship
+```
+> 上一次迭代、或其他变更残留的报告都算不成本次证据。AI 说"测过了"没用，得是本次确认之后跑出来的报告。
+
+**⑤ lite 变更里偷偷夹带接口改动** —— `ai check list-empty-hint`
+
+```text
+[FAIL] lite 变更不允许涉及 API 契约；运行 ai new list-empty-hint --upgrade 升级为完整流程（保留已写内容）
+[FAIL] 涉及数据库/API 的变更必须至少 1 条非手动（自动化）用例——发布门禁凭 JUnit 报告验收，全手动会让证据链失效
+[FAIL] check 未通过（2 项）
+```
+> `--upgrade` 会摘掉 lite 标记、补上 spec，**已写内容全部保留**——快速通道不是逃生通道。
+
+**⑥ AI 冒充你敲确认**（钩子当场按住手；六个装了钩子的工具都生效）
+
+```text
+$ ai confirm order-export-csv          ← 由 AI 发起、不带 --attested
+[ai-control] 已拦截：不带 --attested 的 ai confirm 表示「用户本人在终端敲的」，AI 不得冒充。
+  · 若用户已在对话里明确同意 → 改用：ai confirm order-export-csv --attested（留痕标注 source: ai-attested）
+  · 若还没确认 → 向用户输出确认单，把这条交给用户自己敲：ai confirm order-export-csv
+```
+> 拦下时会**回显真实的变更名**，AI 只能把完整命令原样交给你，没法含糊过去。
+
+**⑦ AI 手写留痕伪造确认**（钩子拦住的第二条路）
+
+```text
+$ Write .ai/changes/order-export-csv/confirmed.json
+[ai-control] 已拦截：.ai/changes/order-export-csv/confirmed.json 是确认/交付留痕，只能由 ai confirm / ai ship 生成。它记录"谁在什么时间确认了哪个版本的变更单"——手写它等于伪造用户确认。
+```
+> 只拦"冒充敲命令"还不够：`.ai/` 整体在写入放行名单里（那是给规则、模板、配置用的），AI 本可以绕开命令**直接手写一份留痕**并把 `source` 写成 `"cli"`。所以留痕文件被单独列为例外。
+
+**⑧ 软核验：声明和实际改动对不上**（这一条**刻意不拦**，只提示）
+
+```text
+$ ai ship order-export-csv
+确认来源：cli（用户本人敲的）
+EVIDENCE_OK：报告 1 份，非手动用例 4 条全部有通过记录。
+注意：以下改动未在影响范围声明（软核验，不拦截）：
+  ? src/main/java/com/example/order/dto/OrderExportRow.java
+  ? src/main/java/com/example/order/mapper/OrderMapper.java
+SHIP_GATES_PASSED：门禁全部通过（已写入 shipped.json）。
+```
+> 硬拦会造成"改文件 → 补声明 → 确认失效 → 重新确认"的死循环式打扰，所以它只列清单，交给你和独立审查看。
+
+</details>
+
 
 ## 它靠什么管住 AI（三层，由软到硬）
 
