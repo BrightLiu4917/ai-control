@@ -19,6 +19,79 @@ ai-control 就是治这四件事的：装进你的项目后，AI 会**先写变�
 
 三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [在线演示页](https://brightliu4917.github.io/ai-control/demo.html)**（含逐步动画、七条门禁拦截的真实输出，以及确认留痕的两条路径；也可 clone 后直接打开 `docs/demo.html`）。下面 README 里已内嵌同一批实录的完整输出。
 
+<details>
+<summary><b>装完敲 <code>ai</code> 提示 command not found，或装到的不是最新版？点开看解法</b></summary>
+
+**① 先让它跑起来（绝对路径，复制即用）**
+
+不是包的问题——是 npm 的全局命令目录没进 PATH。先拿到这个目录（三个平台通用）：
+
+```bash
+npm config get prefix
+```
+
+然后按系统直接调用——**注意 Windows 与 macOS / Linux 的路径形状不同**：
+
+| 系统 | 可执行文件实际在哪 | 直接调用 |
+|---|---|---|
+| macOS / Linux | `<prefix>/bin/ai` | `"$(npm config get prefix)/bin/ai" init` |
+| Windows · cmd | `%APPDATA%\npm\ai.cmd` | `"%APPDATA%\npm\ai.cmd" init` |
+| Windows · PowerShell | `<prefix>\ai.cmd` | `& "$(npm config get prefix)\ai.cmd" init` |
+
+> **关键差异**：macOS / Linux 的可执行文件在 `{prefix}/bin/` 下；**Windows 没有 `bin` 子目录**，`ai` / `ai.cmd` / `ai.ps1` 三个文件直接放在 `{prefix}`（默认 `%AppData%\npm`）里。照抄另一个平台的路径会一直找不到文件。
+
+**② 嫌写全路径麻烦？给当前终端加个别名**（不改系统配置，重开终端失效）
+
+```bash
+# macOS / Linux
+alias ai="$(npm config get prefix)/bin/ai"
+```
+
+```powershell
+# Windows PowerShell
+Set-Alias ai "$(npm config get prefix)\ai.cmd"
+```
+
+**③ 一劳永逸：把全局目录加进 PATH**
+
+```bash
+# macOS / Linux（zsh 写 ~/.zshrc，bash 写 ~/.bashrc）
+echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
+```powershell
+# Windows PowerShell —— 只改「用户级」PATH，不碰系统级；重开终端生效
+$npmDir = (npm config get prefix)
+$cur    = [Environment]::GetEnvironmentVariable("PATH", "User")
+$next   = if ($cur) { "$cur;$npmDir" } else { $npmDir }
+[Environment]::SetEnvironmentVariable("PATH", $next, "User")
+```
+
+> ⚠️ **Windows 上别用 `setx PATH "%PATH%;%APPDATA%\npm"`**：`%PATH%` 展开的是「系统级 + 用户级」合并后的值，会把系统路径整份复制进用户变量；旧版 Windows 还有 1024 字符截断的风险。用上面的 PowerShell 写法，或在「系统属性 → 环境变量 → 用户变量 → Path」里手动加一条。
+
+**④ 完全不想碰 PATH：用 npx**（三个平台一致）
+
+```bash
+npx -y @brightliu/ai-control@latest init
+```
+
+> 代价是每条命令都要带完整包名（`ai init` → `npx -y @brightliu/ai-control init`），走完整流程比较啰嗦，适合应急。
+
+---
+
+**装完不是最新版？** 国内网络默认走淘宝镜像，而镜像同步有延迟（几分钟到几小时）。表现是：**安装过程不报任何错，但 `ai version` 显示的是旧版本**。
+
+```bash
+# 对比两边版本
+npm view @brightliu/ai-control version --registry=https://registry.npmjs.org   # 官方源
+npm view @brightliu/ai-control version                                          # 你当前的源
+
+# 直连官方源重装
+npm i -g @brightliu/ai-control@latest --registry=https://registry.npmjs.org
+```
+
+</details>
+
 ## 效果对比
 
 ```text
@@ -45,6 +118,7 @@ AI：（实现 → 跑测试）测试报告 4 条全绿，ai ship 发布检查�
 # 1. 装工具（一次性）
 npm install -g @brightliu/ai-control
 # 网络装不了 npm 官方源时的备选：npm install -g github:BrightLiu4917/ai-control
+# 装完敲 ai 提示 command not found，或版本不对？见上文「安装（动画演示）」末尾的排查折叠块
 
 # 2. 装进你的项目
 cd 你的项目
