@@ -14,7 +14,7 @@ ai-control 就是治这四件事的：装进你的项目后，AI 会**先写变�
 ## 安装（动画演示）
 
 <p align="center">
-  <img src="docs/install-demo.svg" alt="安装演示：npm 装工具 → ai init 装进项目 → ai sync 生成 Claude Code / WorkBuddy 适配物" width="880">
+  <img src="https://brightliu4917.github.io/ai-control/install-demo.svg" alt="安装演示：npm 装工具 → ai init 装进项目 → ai sync 为六个 AI 工具写入钩子配置" width="880">
 </p>
 
 三条命令：装工具、装进项目、给六个 AI 工具（Claude Code / Codex / Qoder / Trae / Cursor / WorkBuddy）写入钩子与适配物——装完即用，六个都原生读 `AGENTS.md`。**想同步看一个真实需求怎么走完整流程 → 打开 [在线演示页](https://brightliu4917.github.io/ai-control/demo.html)**（含逐步动画、七条门禁拦截的真实输出，以及确认留痕的两条路径；也可 clone 后直接打开 `docs/demo.html`）。下面 README 里已内嵌同一批实录的完整输出。
