@@ -120,4 +120,157 @@ t("go 输出解析：PASS/FAIL/SKIP 与子测试", () => {
   assert.strictEqual(r.failures.length, 1);
 });
 
+// ── usage：使用统计与工牌（回答"到底有没有被用到"）──
+const usage = require("../lib/usage");
+
+t("usage.summarize 聚合命令/项目/退出码/近 7 天", () => {
+  const iso = new Date().toISOString();
+  const rows = [
+    { ts: iso, cmd: "ship", proj: "a", code: 0 },
+    { ts: iso, cmd: "ship", proj: "a", code: 2 },
+    { ts: iso, cmd: "test", proj: "b", code: 0 },
+    { ts: "2020-01-01T00:00:00.000Z", cmd: "init", proj: "a", code: 0 },
+  ];
+  const s = usage.summarize(rows);
+  assert.strictEqual(s.total, 4);
+  assert.strictEqual(s.byCmd.ship, 2);
+  assert.strictEqual(s.byProj.a, 3);
+  assert.strictEqual(s.nonzero, 1);        // 只有 code=2 那条算非零退出
+  assert.strictEqual(s.recent7, 3);        // 2020 年那条不算最近 7 天
+  assert.strictEqual(s.first, iso);        // 首次 = 文件首行，不做时间排序
+  assert.strictEqual(s.recent.length, 4);
+});
+
+t("usage.summarize 容错：空日志与缺字段不炸", () => {
+  assert.strictEqual(usage.summarize([]).total, 0);
+  const s = usage.summarize([{}]);
+  assert.strictEqual(s.total, 1);
+  assert.strictEqual(s.byCmd["?"], 1);
+  assert.strictEqual(s.byProj["（项目外）"], 1);
+});
+
+t("usage 工牌：品牌+版本+命令+计数；stats/version 不打、可关", () => {
+  const keys = ["AI_CONTROL_QUIET", "AI_CONTROL_BANNER"];
+  const saved = keys.map((k) => process.env[k]);
+  keys.forEach((k) => delete process.env[k]);
+  try {
+    const line = usage.bannerText({ cmd: "ship", version: "9.9.9", count: 37 });
+    assert.ok(line.startsWith("◆ bright-ai-coding · "), line);
+    assert.ok(line.includes("ai-control v9.9.9"));
+    assert.ok(line.includes("ai ship"));
+    assert.ok(line.includes("本机第 37 次"));
+    // 统计命令自己不打牌，否则输出会被自己的工牌盖住
+    assert.strictEqual(usage.bannerText({ cmd: "stats", version: "9.9.9", count: 1 }), "");
+    assert.strictEqual(usage.bannerText({ cmd: "version", version: "9.9.9", count: 1 }), "");
+    // 计数缺失（如记账关闭）时不该出现"本机第 0 次"
+    assert.ok(!usage.bannerText({ cmd: "ship", version: "9.9.9", count: 0 }).includes("本机第"));
+    process.env.AI_CONTROL_QUIET = "1";
+    assert.strictEqual(usage.bannerText({ cmd: "ship", version: "9.9.9", count: 1 }), "");
+  } finally {
+    keys.forEach((k, i) => { if (saved[i] === undefined) delete process.env[k]; else process.env[k] = saved[i]; });
+  }
+});
+
+t("usage 工牌：项目 config 里 banner=off 即静音", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "cfg-"));
+  fs.mkdirSync(path.join(d, ".ai"), { recursive: true });
+  fs.writeFileSync(path.join(d, ".ai", "config.json"), JSON.stringify({ banner: "off" }));
+  const keys = ["AI_CONTROL_QUIET", "AI_CONTROL_BANNER"];
+  const saved = keys.map((k) => process.env[k]);
+  keys.forEach((k) => delete process.env[k]);
+  try {
+    assert.strictEqual(usage.bannerText({ cmd: "ship", version: "9.9.9", count: 1, root: d }), "");
+    assert.ok(usage.bannerText({ cmd: "ship", version: "9.9.9", count: 1 }).length > 0); // 无项目上下文时按默认开
+  } finally {
+    keys.forEach((k, i) => { if (saved[i] === undefined) delete process.env[k]; else process.env[k] = saved[i]; });
+  }
+});
+
+t("usage 工牌配色：TTY 上色；NO_COLOR 与管道不上色", () => {
+  const line = "◆ bright-ai-coding · ai-control v9.9.9 · ai ship";
+  const saved = process.env.NO_COLOR;
+  delete process.env.NO_COLOR;
+  try {
+    const colored = usage.colorize(line, { isTTY: true });
+    assert.ok(colored.includes("\x1b[36m"), "TTY 下品牌应带青色");
+    assert.ok(colored.includes("\x1b[2m"), "TTY 下其余应压暗");
+    assert.strictEqual(usage.colorize(line, { isTTY: false }), line); // 管道/CI：原样，不带转义
+    process.env.NO_COLOR = "1";
+    assert.strictEqual(usage.colorize(line, { isTTY: true }), line);  // NO_COLOR 优先
+  } finally {
+    if (saved === undefined) delete process.env.NO_COLOR; else process.env.NO_COLOR = saved;
+  }
+});
+
+t("usage 项目配置 usage=off 停记账（env 之外的团队口径）", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "cfg2-"));
+  fs.mkdirSync(path.join(d, ".ai"), { recursive: true });
+  const saved = process.env.AI_CONTROL_USAGE;
+  delete process.env.AI_CONTROL_USAGE;
+  try {
+    assert.strictEqual(usage.enabled(d), true);  // 没配置默认开
+    fs.writeFileSync(path.join(d, ".ai", "config.json"), JSON.stringify({ usage: "off" }));
+    assert.strictEqual(usage.enabled(d), false);
+    assert.strictEqual(usage.enabled(), true);   // 无项目上下文时只看 env
+  } finally {
+    if (saved === undefined) delete process.env.AI_CONTROL_USAGE; else process.env.AI_CONTROL_USAGE = saved;
+  }
+});
+
+t("usage 日志超 1MB 自动只留尾部（防无限膨胀）", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "usg-"));
+  const file = path.join(d, "usage.jsonl");
+  const row = JSON.stringify({ ts: "2026-01-01T00:00:00.000Z", cmd: "check", id: "x", proj: "p", code: 0 });
+  fs.writeFileSync(file, (row + "\n").repeat(20000));
+  const savedFile = process.env.AI_CONTROL_USAGE_FILE;
+  const savedUsage = process.env.AI_CONTROL_USAGE;
+  process.env.AI_CONTROL_USAGE_FILE = file;
+  delete process.env.AI_CONTROL_USAGE;
+  try {
+    assert.ok(fs.statSync(file).size > 1024 * 1024, "前置：文件确实超过 1MB");
+    assert.strictEqual(usage.record({ ts: "2026-01-02T00:00:00.000Z", cmd: "ship", proj: "p", code: 0 }), true);
+    const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean);
+    assert.ok(lines.length <= 2001, `裁剪后仍有 ${lines.length} 行`);
+    assert.ok(lines[lines.length - 1].includes('"ship"'), "保留尾部、最新一条还在");
+    assert.ok(usage.total() <= 2001);
+  } finally {
+    if (savedFile === undefined) delete process.env.AI_CONTROL_USAGE_FILE; else process.env.AI_CONTROL_USAGE_FILE = savedFile;
+    if (savedUsage === undefined) delete process.env.AI_CONTROL_USAGE; else process.env.AI_CONTROL_USAGE = savedUsage;
+  }
+});
+
+t("usage.read 跳过坏行（半截 JSON 不该让统计崩掉）", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "usg2-"));
+  const file = path.join(d, "usage.jsonl");
+  fs.writeFileSync(file, '{"ts":"2026-01-01T00:00:00.000Z","cmd":"ship","proj":"p","code":0}\n{"ts":"broken\n\nnot json at all\n');
+  const saved = process.env.AI_CONTROL_USAGE_FILE;
+  process.env.AI_CONTROL_USAGE_FILE = file;
+  try {
+    const rows = usage.read();
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(usage.summarize(rows).byCmd.ship, 1);
+  } finally {
+    if (saved === undefined) delete process.env.AI_CONTROL_USAGE_FILE; else process.env.AI_CONTROL_USAGE_FILE = saved;
+  }
+});
+
+t("拦截留痕：超上限只保留尾部（AI 反复撞门禁也不会无限增长）", () => {
+  const { logInterception } = require("../payload/hooks/usage-log");
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "icp-"));
+  fs.mkdirSync(path.join(d, ".ai"), { recursive: true });
+  const saved = process.env.AI_CONTROL_USAGE;
+  delete process.env.AI_CONTROL_USAGE;
+  try {
+    const file = path.join(d, ".ai", "interceptions.jsonl");
+    const row = JSON.stringify({ ts: "2026-01-01T00:00:00.000Z", hook: "guard-write", reason: "x" });
+    fs.writeFileSync(file, (row + "\n").repeat(2500));
+    logInterception(d, { hook: "guard-write", reason: "unconfirmed-change", file: "src/A.java" });
+    const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean);
+    assert.strictEqual(lines.length, 2000);
+    assert.ok(lines[lines.length - 1].includes("unconfirmed-change"), "保留的是最新一条");
+  } finally {
+    if (saved === undefined) delete process.env.AI_CONTROL_USAGE; else process.env.AI_CONTROL_USAGE = saved;
+  }
+});
+
 console.log(`\n${passed} 个单测全部通过。`);

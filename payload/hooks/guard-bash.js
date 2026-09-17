@@ -6,6 +6,11 @@
 
 if (process.env.AI_CONTROL_HOOKS === "off") process.exit(0);
 
+// 拦截记录（可选）：老版本安装里没有 usage-log.js 时，判定照常，只是不记账
+let logInterception = () => {};
+let findRoot = () => null;
+try { ({ logInterception, findRoot } = require("./usage-log")); } catch { /* 无记录能力 */ }
+
 let raw = "";
 process.stdin.on("data", (d) => (raw += d));
 process.stdin.on("end", () => {
@@ -15,9 +20,17 @@ process.stdin.on("end", () => {
   } catch {
     process.exit(0);
   }
-  // 确认必须出自用户之手：AI 代跑 ai confirm 会让"确认留痕"失去意义
-  if (/(^|[;&|]\s*|\$\(\s*)(node\s+|npx\s+)?(\S*\/)?ai(\.js)?\s+confirm\b/.test(cmd)) {
-    console.error("[ai-control] 已拦截：ai confirm 必须由用户本人在终端执行。请向用户输出确认单，并把 `ai confirm <change-id>` 这条命令交给用户运行。");
+  // 确认留痕：不带 --attested 的 ai confirm 表示"用户本人在终端敲的"，AI 不能冒充。
+  // 用户已在对话里明确同意的，改用 ai confirm <id> --attested，留痕会如实标注来源。
+  const confirmHit = cmd.match(/(?:^|[;&|]\s*|\$\(\s*)((?:node\s+|npx\s+)?(?:\S*\/)?ai(?:\.js)?\s+confirm\b[^\n;&|]*)/);
+  if (confirmHit && !/--attested\b/.test(confirmHit[1])) {
+    const id = (confirmHit[1].match(/confirm\s+([^\s-][^\s]*)/) || [])[1] || "<change-id>";
+    console.error(
+      "[ai-control] 已拦截：不带 --attested 的 ai confirm 表示「用户本人在终端敲的」，AI 不得冒充。\n" +
+      `  · 若用户已在对话里明确同意 → 改用：ai confirm ${id} --attested（留痕标注 source: ai-attested）\n` +
+      `  · 若还没确认 → 向用户输出确认单，把这条交给用户自己敲：ai confirm ${id}`
+    );
+    logInterception(findRoot(), { hook: "guard-bash", reason: "ai-confirm-impersonation", change: id });
     process.exit(2);
   }
   const hits = [];
@@ -31,6 +44,7 @@ process.stdin.on("end", () => {
       `[ai-control] 已拦截危险 SQL（${hits.join("、")}）。` +
       `数据库破坏性操作必须走两阶段确认：输出变更确认包（目标 SQL + 回滚 SQL + 影响说明）等用户确认后，由用户执行或用户明确授权后执行；DROP/TRUNCATE 前默认备份（原表名_copy_yyyyMMdd）。`
     );
+    logInterception(findRoot(), { hook: "guard-bash", reason: "dangerous-sql", detail: hits.join("、") });
     process.exit(2);
   }
   process.exit(0);

@@ -11,7 +11,7 @@
 
 ## 两个必须等用户点头的确认点
 
-1. **change 确认**：proposal + test-cases 未经用户确认，禁止写任何业务代码；用户点头后**由用户本人**运行 `ai confirm <id>` 留痕（AI 禁止代跑，把命令交给用户）（ship 门禁的前置，确认后再改 proposal/test-cases 即失效须重确认）。
+1. **change 确认**：proposal + test-cases 未经用户确认，禁止写任何业务代码（ship 门禁的前置；确认后再改 proposal/test-cases 即失效，须重新确认）。用户明确同意后，留痕两选一——**终端场景**：把 `ai confirm <id>` 交给用户自己敲（`source: cli`）；**GUI/app 场景**（用户只在对话里回了一句同意）：你代记 `ai confirm <id> --attested`（`source: ai-attested`，留痕如实标注是代记的）。**禁止**不带 `--attested` 代跑——那是冒充"用户本人敲的"，Claude Code 下会被钩子拦。两种方式的门禁强度完全一样，区别只在留痕诚实不诚实。
 2. **数据库确认**：涉及表结构/字段/索引/迁移时，先输出表结构设计审查，确认后再输出变更确认包（含目标 DDL、回滚 SQL、联动清单），再次确认后才能执行 SQL 或写 migration。DROP/TRUNCATE 前默认备份（`原表名_copy_yyyyMMdd`）。完整细则见 `.ai/rules/10-db-schema.md`。
 
 ## 任务分级
@@ -24,7 +24,7 @@
 
 ```text
 用户提需求 → 影响探测（检索代码，列出触碰的文件/表/接口）→ 判级（证据判级，拿不准判高一级）
-→ ai new 建骨架 → 补全 proposal + test-cases → ai check → 确认单标注级别与理由，等用户确认 → 用户运行 ai confirm
+→ ai new 建骨架 → 补全 proposal + test-cases → ai check → 确认单标注级别与理由，等用户确认 → 写确认留痕（ai confirm，或用户已同意时 --attested）
 → 实现（最小切片）→ ai test <id> → ai ship（证据门禁秒级）→ 交付
 ```
 
