@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 546" width="880" height="546" role="img" aria-label="ai-control 安装动画演示：三条命令装进项目，每条命令先打一行 bright-ai-coding 工牌">
+  <title>ai-control 安装演示</title>
+  <desc>终端动画：npm 安装、ai init 装入项目（含 .ai/VERSION）、ai sync 生成六个 AI 工具的钩子配置与适配物。每条命令开头都会打印一行 bright-ai-coding 工牌。</desc>
+  <style><![CDATA[
+    text { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "PingFang SC", "Microsoft YaHei", monospace; }
+    .dim   { fill: #7b8ca6 }
+    .ok    { fill: #34d399 }
+    .cmd   { fill: #e8eef7 }
+    .tree  { fill: #c3d1e3 }
+    .note  { fill: #7386a1 }
+    .brand { fill: #5eead4 }
+
+    .blink { animation: BLINK .8s step-end infinite }
+    @keyframes BLINK { 0%, 50% { opacity: 1 } 50.01%, 100% { opacity: 0 } }
+
+    .a { animation: A 10s linear infinite }
+    .b { animation: B 10s linear infinite }
+    .c { animation: C 10s linear infinite }
+    .d { animation: D 10s linear infinite }
+    .f { animation: F 10s linear infinite }
+    .g { animation: G 10s linear infinite }
+    .h { animation: H 10s linear infinite }
+    .i { animation: I 10s linear infinite }
+    .j { animation: J 10s linear infinite }
+    .k { animation: K 10s linear infinite }
+    .l { animation: L 10s linear infinite }
+    .m { animation: M 10s linear infinite }
+    .n { animation: N 10s linear infinite }
+    .o { animation: O 10s linear infinite }
+    .p { animation: P 10s linear infinite }
+    .q { animation: Q 10s linear infinite }
+    .r { animation: R 10s linear infinite }
+    .s { animation: S 10s linear infinite }
+    .t { animation: T 10s linear infinite }
+    .u { animation: U 10s linear infinite }
+
+    @keyframes A { 0%, 4%    { opacity: 0 } 6%    , 100% { opacity: 1 } }
+    @keyframes B { 0%, 6.8%  { opacity: 0 } 8.8%  , 100% { opacity: 1 } }
+    @keyframes C { 0%, 9.6%  { opacity: 0 } 11.6% , 100% { opacity: 1 } }
+    @keyframes D { 0%, 12.4% { opacity: 0 } 14.4% , 100% { opacity: 1 } }
+    @keyframes F { 0%, 15.5% { opacity: 0 } 17.5% , 100% { opacity: 1 } }
+    @keyframes G { 0%, 18.5% { opacity: 0 } 20.5% , 100% { opacity: 1 } }
+    @keyframes H { 0%, 23.5% { opacity: 0 } 25.5% , 100% { opacity: 1 } }
+    @keyframes I { 0%, 28.5% { opacity: 0 } 30.5% , 100% { opacity: 1 } }
+    @keyframes J { 0%, 31%   { opacity: 0 } 33%   , 100% { opacity: 1 } }
+    @keyframes K { 0%, 34.5% { opacity: 0 } 36.5% , 100% { opacity: 1 } }
+    @keyframes L { 0%, 37%   { opacity: 0 } 39%   , 100% { opacity: 1 } }
+    @keyframes M { 0%, 39.5% { opacity: 0 } 41.5% , 100% { opacity: 1 } }
+    @keyframes N { 0%, 42%   { opacity: 0 } 44%   , 100% { opacity: 1 } }
+    @keyframes O { 0%, 44.5% { opacity: 0 } 46.5% , 100% { opacity: 1 } }
+    @keyframes P { 0%, 47%   { opacity: 0 } 49%   , 100% { opacity: 1 } }
+    @keyframes Q { 0%, 50.5% { opacity: 0 } 52.5% , 100% { opacity: 1 } }
+    @keyframes R { 0%, 54%   { opacity: 0 } 56%   , 100% { opacity: 1 } }
+    @keyframes S { 0%, 56.5% { opacity: 0 } 58.5% , 100% { opacity: 1 } }
+    @keyframes T { 0%, 59%   { opacity: 0 } 61%   , 100% { opacity: 1 } }
+    @keyframes U { 0%, 61.5% { opacity: 0 } 63.5% , 100% { opacity: 1 } }
+
+    .car1 { animation: CAR1 10s linear infinite }
+    .car2 { animation: CAR2 10s linear infinite }
+    .car3 { animation: CAR3 10s linear infinite }
+    .car4 { animation: CAR4 10s linear infinite }
+    @keyframes CAR1 { 0%, 4%    { opacity: 0 } 5%    , 16%   { opacity: 1 } 16.5%, 100% { opacity: 0 } }
+    @keyframes CAR2 { 0%, 18.5% { opacity: 0 } 19.5% , 25%   { opacity: 1 } 25.5%, 100% { opacity: 0 } }
+    @keyframes CAR3 { 0%, 23.5% { opacity: 0 } 24.5% , 32%   { opacity: 1 } 32.5%, 100% { opacity: 0 } }
+    @keyframes CAR4 { 0%, 50.5% { opacity: 0 } 51.5% , 60%   { opacity: 1 } 60.5%, 100% { opacity: 0 } }
+
+    .pill   { animation: PULSE 10s linear infinite }
+    .banner { animation: BAN   10s linear infinite }
+    @keyframes PULSE { 0%, 64% { opacity: 0 } 67%, 78% { opacity: 1 } 80%, 100% { opacity: .8 } }
+    @keyframes BAN   { 0%, 64% { opacity: 0 } 67%, 100% { opacity: 1 } }
+  ]]></style>
+
+  <rect x="0" y="0" width="880" height="546" rx="16" fill="#0c1425"/>
+  <rect x="0.75" y="0.75" width="878.5" height="544.5" rx="15.5" fill="none" stroke="#1e2c44" stroke-width="1.5"/>
+  <path d="M0,16 A16,16 0 0 1 16,0 H864 A16,16 0 0 1 880,16 V38 H0 Z" fill="#152136"/>
+  <circle cx="28" cy="19" r="5.5" fill="#ff5f57"/>
+  <circle cx="48" cy="19" r="5.5" fill="#febc2e"/>
+  <circle cx="68" cy="19" r="5.5" fill="#28c840"/>
+  <text x="440" y="24" text-anchor="middle" font-size="12.5" fill="#8093ae">bash — 装进你的项目（order-center，Java）</text>
+
+  <!-- 装工具 -->
+  <text class="ok a" x="28" y="84" font-size="15">$</text>
+  <text x="46" y="84" font-size="15"><tspan class="cmd a">npm install</tspan><tspan class="cmd b"> -g</tspan><tspan class="cmd c"> @brightliu</tspan><tspan class="cmd d">/ai-control</tspan><tspan class="car1 ok"><tspan class="blink">▌</tspan></tspan></text>
+  <text class="f" x="500" y="84" font-size="15"><tspan class="ok">✓ </tspan><tspan class="dim">added 1 package in 1.4s</tspan></text>
+
+  <!-- 进项目 -->
+  <text class="ok g" x="28" y="111" font-size="15">$</text>
+  <text x="46" y="111" font-size="15"><tspan class="cmd g">cd order-center</tspan><tspan class="car2 ok"><tspan class="blink">▌</tspan></tspan></text>
+
+  <!-- ai init -->
+  <text class="ok h" x="28" y="138" font-size="15">$</text>
+  <text x="46" y="138" font-size="15"><tspan class="cmd h">ai init</tspan><tspan class="car3 ok"><tspan class="blink">▌</tspan></tspan></text>
+  <text class="i" x="46" y="165" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.2.1 · ai init · 本机第 1 次</tspan></text>
+  <text class="j" x="46" y="192" font-size="14"><tspan class="ok">INIT_OK：</tspan><tspan class="dim">已安装（stack=java）</tspan></text>
+
+  <!-- 装入的东西 -->
+  <text class="tree k" x="68" y="219" font-size="14">AGENTS.md</text>
+  <text class="note k" x="210" y="219" font-size="13">规矩总纲 —— AI 工具自动读取</text>
+
+  <text class="tree l" x="68" y="246" font-size="14">.ai/rules/</text>
+  <text class="note l" x="210" y="246" font-size="13">20 份中文工程规则</text>
+
+  <text class="tree m" x="68" y="273" font-size="14">.ai/agents/</text>
+  <text class="note m" x="210" y="273" font-size="13">4 个角色手册（规格 / DB / 开发 / 测试）</text>
+
+  <text class="tree n" x="68" y="300" font-size="14">.ai/changes/</text>
+  <text class="note n" x="210" y="300" font-size="13">每个需求一个文件夹（变更单 + 确认留痕）</text>
+
+  <text class="tree o" x="68" y="327" font-size="14">.ai/hooks/</text>
+  <text class="note o" x="210" y="327" font-size="13">六个工具动手瞬间的拦截钩子</text>
+
+  <text class="tree p" x="68" y="354" font-size="14">.ai/VERSION</text>
+  <text class="note p" x="210" y="354" font-size="13">项目里这份框架的版本（落后 CLI 会被 doctor 指出）</text>
+
+  <g class="l" fill="none" stroke="#4d6183" stroke-width="1.5">
+    <path d="M52,241 V349"/>
+    <path d="M52,241 H64 M52,268 H64 M52,295 H64 M52,322 H64 M52,349 H64"/>
+  </g>
+
+  <!-- ai sync -->
+  <text class="ok q" x="28" y="381" font-size="15">$</text>
+  <text x="46" y="381" font-size="15"><tspan class="cmd q">ai sync</tspan><tspan class="car4 ok"><tspan class="blink">▌</tspan></tspan></text>
+  <text class="r" x="46" y="408" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.2.1 · ai sync · 本机第 2 次</tspan></text>
+  <text class="s" x="46" y="435" font-size="14"><tspan class="ok">SYNC_OK：</tspan><tspan class="dim">written=19</tspan></text>
+  <text class="dim t" x="68" y="462" font-size="13">+ CLAUDE.md、六工具的钩子配置（.claude/.codex/.qoder/.trae/.cursor/.workbuddy）</text>
+  <text class="dim u" x="68" y="489" font-size="13">+ .claude/agents ×4、.claude/skills ×3、.workbuddy/skills ×5</text>
+
+  <!-- 结尾 -->
+  <rect class="pill" x="20" y="497" width="840" height="34" rx="9" fill="#123326" stroke="#1f6b4d" stroke-width="1"/>
+  <text class="banner" x="40" y="519" font-size="14" fill="#5eead4">✓ 三条命令装完 —— 命令开头那行就是 bright-ai-coding 的工牌；之后 AI 动你代码前要先递变更单。</text>
+</svg>

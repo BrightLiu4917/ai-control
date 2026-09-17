@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-control 演示 · 安装 + 一个真实需求走一遍</title>
+<style>
+  :root {
+    --bg: #f5f7f9;
+    --panel: #ffffff;
+    --panel-2: #fafbfc;
+    --ink: #10171f;
+    --ink-2: #3d4a56;
+    --muted: #6b7a89;
+    --line: #e2e7ec;
+    --line-2: #eef1f4;
+    --brand: #0d7a55;
+    --brand-soft: #e6f4ee;
+    --red: #c0392b;
+    --red-soft: #fdecea;
+    --amber: #a06a00;
+    --amber-soft: #fdf3e0;
+    --term-bg: #0c1425;
+    --term-line: #1e2c44;
+    --term-ink: #e8eef7;
+    --term-dim: #7b8ca6;
+    --term-ok: #34d399;
+    --term-red: #ff8080;
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "PingFang SC", "Microsoft YaHei", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --panel: #151b23;
+      --panel-2: #11161d;
+      --ink: #e6edf3;
+      --ink-2: #c2ccd6;
+      --muted: #8b98a5;
+      --line: #232b35;
+      --line-2: #1b222a;
+      --brand: #3ddc97;
+      --brand-soft: #10251d;
+      --red: #ff8b80;
+      --red-soft: #2a1514;
+      --amber: #e3b341;
+      --amber-soft: #2a2113;
+      --term-bg: #0a101c;
+      --term-line: #1a2536;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  a { color: var(--brand); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── 头部 ── */
+  header.hero { padding: 8px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+  .eyebrow {
+    display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--brand); background: var(--brand-soft);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; margin-bottom: 16px;
+  }
+  h1 { font-size: 30px; line-height: 1.3; margin: 0 0 12px; letter-spacing: -.01em; }
+  .lede { font-size: 16px; color: var(--ink-2); max-width: 720px; margin: 0 0 20px; }
+  .lede code, p code, li code, td code, .doc code {
+    font-family: var(--mono); font-size: .88em; background: var(--line-2);
+    border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px;
+  }
+  nav.jump { display: flex; gap: 8px; flex-wrap: wrap; }
+  nav.jump a {
+    font-size: 13.5px; text-decoration: none; color: var(--ink-2); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
+  }
+  nav.jump a:hover { border-color: var(--brand); color: var(--brand); }
+
+  /* ── 区块 ── */
+  section { margin: 0 0 56px; }
+  h2 { font-size: 21px; margin: 0 0 6px; letter-spacing: -.01em; }
+  h2 .idx {
+    font-family: var(--mono); font-size: 13px; color: var(--brand);
+    border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; margin-right: 9px; vertical-align: 2px;
+  }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+
+  /* ── 终端 ── */
+  .term {
+    background: var(--term-bg); border: 1px solid var(--term-line); border-radius: var(--radius);
+    overflow: hidden; box-shadow: 0 1px 3px rgba(16,23,31,.06);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px; padding: 9px 14px;
+    background: #152136; border-bottom: 1px solid var(--term-line);
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f57 } .dot.y { background: #febc2e } .dot.g { background: #28c840 }
+  .term-title {
+    margin-left: 8px; font-family: var(--mono); font-size: 12px; color: #8093ae;
+  }
+  .term-body {
+    padding: 16px 18px; font-family: var(--mono); font-size: 13px; line-height: 1.75;
+    white-space: pre-wrap; word-break: break-word; color: var(--term-ink);
+    min-height: 60px;
+  }
+  .term-body .ln { display: block; }
+  .term-body .p { color: var(--term-ok); }               /* $ 提示符 */
+  .term-body .c { color: var(--term-ink); }              /* 命令 */
+  .term-body .d { color: var(--term-dim); }              /* 普通输出 */
+  .term-body .s { color: var(--term-ok); }               /* 成功 */
+  .term-body .f { color: var(--term-red); }              /* 失败 */
+  .term-body .n { color: var(--amber); }                 /* 提示 */
+  .term-body .b1 { color: #5eead4; }                     /* 工牌：品牌段 */
+  .term-body .b2 { color: var(--term-dim); }             /* 工牌：其余（版本 · 命令 · 计数） */
+  .term-body .cursor {
+    display: inline-block; width: 8px; height: 15px; vertical-align: -2px;
+    background: var(--term-ok); animation: blink .8s step-end infinite;
+  }
+  @keyframes blink { 0%, 50% { opacity: 1 } 50.01%, 100% { opacity: 0 } }
+  .term-foot {
+    border-top: 1px solid var(--term-line); padding: 9px 14px;
+    font-family: var(--mono); font-size: 11.5px; color: #8093ae;
+  }
+
+  /* ── 播放控制 ── */
+  .player { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }
+  button.btn {
+    font-family: var(--sans); font-size: 13.5px; color: var(--ink-2); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 13px; cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--brand); color: var(--brand); }
+  button.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  @media (prefers-color-scheme: dark) { button.btn.primary { color: #06231a; } }
+  .player .count { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  .bar { height: 3px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 0 0 18px; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .3s ease; }
+
+  /* ── 案例：左步骤 + 右面板 ── */
+  .case { display: grid; grid-template-columns: 232px 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 860px) { .case { grid-template-columns: 1fr; gap: 16px; } }
+  ol.rail { list-style: none; margin: 0; padding: 0; position: sticky; top: 20px; }
+  @media (max-width: 860px) { ol.rail { position: static; display: flex; overflow-x: auto; gap: 8px; padding-bottom: 6px; } }
+  ol.rail li {
+    display: flex; gap: 9px; align-items: baseline; padding: 6px 10px; border-radius: 8px;
+    font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid transparent;
+  }
+  @media (max-width: 860px) { ol.rail li { white-space: nowrap; border-color: var(--line); background: var(--panel); } }
+  ol.rail li:hover { color: var(--ink-2); }
+  ol.rail li.on { color: var(--ink); background: var(--panel); border-color: var(--line); }
+  ol.rail li.done { color: var(--ink-2); }
+  ol.rail li .num { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  ol.rail li.on .num { color: var(--brand); }
+  ol.rail li.done .num::after { content: " ✓"; color: var(--brand); }
+
+  .stage { min-height: 360px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 20px; margin: 0 0 14px;
+  }
+  .card h3 { font-size: 15px; margin: 0 0 10px; }
+  .card h3 .tag {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 400; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; margin-left: 8px;
+  }
+  .card p:last-child { margin-bottom: 0; }
+  .fade { animation: rise .34s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(7px) } to { opacity: 1; transform: none } }
+
+  /* 对话 */
+  .msg { display: flex; gap: 11px; margin: 0 0 14px; animation: rise .3s ease both; }
+  .msg .who {
+    flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 6px;
+    height: 22px; line-height: 18px; margin-top: 2px;
+  }
+  .msg.you .who { background: var(--line-2); color: var(--ink-2); border: 1px solid var(--line); }
+  .msg.ai  .who { background: var(--brand-soft); color: var(--brand); border: 1px solid var(--line); }
+  .msg .say { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .msg.you .say { background: var(--panel-2); }
+
+  /* 表格 / 清单 */
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td.mono, th.mono { font-family: var(--mono); font-size: 12.5px; }
+  ul.plain { margin: 0; padding-left: 20px; }
+  ul.plain li { margin: 3px 0; }
+  .kv { display: grid; grid-template-columns: 96px 1fr; gap: 4px 14px; font-size: 14px; }
+  .kv dt { color: var(--muted); font-size: 13px; }
+  .kv dd { margin: 0; }
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: 11.5px; padding: 2px 8px;
+    border-radius: 999px; border: 1px solid var(--line);
+  }
+  .pill.ok { color: var(--brand); background: var(--brand-soft); }
+  .pill.bad { color: var(--red); background: var(--red-soft); }
+  .pill.warn { color: var(--amber); background: var(--amber-soft); }
+
+  /* 代码块 */
+  pre.code {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 13px 15px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.7; margin: 0 0 12px; color: var(--ink-2);
+  }
+  pre.code .add { color: var(--brand); }
+  pre.code .del { color: var(--red); }
+  pre.code .cm  { color: var(--muted); }
+  pre.code .hl  { color: var(--ink); }
+
+  /* 门禁实录网格 */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  .gcard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .gcard .hd { padding: 12px 16px 10px; border-bottom: 1px solid var(--line-2); }
+  .gcard .hd b { display: block; font-size: 14px; }
+  .gcard .hd span { color: var(--muted); font-size: 12.8px; }
+  .gcard .term { border: 0; border-radius: 0; }
+  .gcard .term-body { font-size: 12.2px; padding: 13px 16px; }
+  .gcard .why { padding: 11px 16px 14px; font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line-2); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 0 0 8px; }
+  .note-inline { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">ai-control · 演示</span>
+    <h1>装一次，AI 改你代码之前要先给你递一张变更单</h1>
+    <p class="lede">
+      这一页演示两件事：<b>怎么装</b>（三条命令），和<b>装上以后一个真实需求怎么走</b>——
+      订单列表加导出 CSV。页面上所有命令输出都是真实运行捕获的，不是手写的示意。
+    </p>
+    <nav class="jump">
+      <a href="#install">① 安装：三条命令</a>
+      <a href="#case">② 真实需求：订单导出 CSV</a>
+      <a href="#visible">③ 你怎么知道它在用</a>
+      <a href="#gates">④ 门禁实录：拦截与软核验</a>
+      <a href="#cheat">⑤ 命令速查</a>
+    </nav>
+  </header>
+
+
+  <!-- ══════════ ① 安装 ══════════ -->
+  <section id="install">
+    <h2><span class="idx">①</span>安装：三条命令</h2>
+    <p class="sub">装工具（一次性）、装进项目、给 Claude Code / WorkBuddy 生成适配物。改文案这类小事不需要任何额外步骤。</p>
+
+    <div class="player">
+      <button class="btn primary" id="inst-play">▶ 播放</button>
+      <span class="count" id="inst-count">就绪</span>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span class="term-title">bash — 装进你的项目（order-center，Java / Spring Boot + Vue）</span></div>
+      <div class="term-body" id="inst-term"></div>
+      <div class="term-foot" id="inst-foot">等待播放…</div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>装完项目里多了什么<span class="tag">ai init 的产物</span></h3>
+      <table>
+        <thead><tr><th class="mono">路径</th><th>是什么</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">AGENTS.md</td><td>契约总纲，63 行，AI 工具每次对话自动加载</td></tr>
+          <tr><td class="mono">.ai/rules/</td><td>20 份中文工程规则，按需加载（禁止编造字段、SQL 必带 WHERE、枚举禁魔法值……）</td></tr>
+          <tr><td class="mono">.ai/agents/</td><td>4 个角色手册：产品规格 / 数据库 / 开发 / 测试</td></tr>
+          <tr><td class="mono">.ai/changes/</td><td>每个需求一个文件夹：变更单、验收用例、确认留痕、测试证据</td></tr>
+          <tr><td class="mono">.ai/hooks/</td><td>守卫脚本——<b>六个 AI 工具的钩子都调用它</b>（写影响范围外的文件、危险 SQL、<b>冒充</b>用户敲 confirm、手写留痕伪造确认，都会被当场按住；如实代记走 <code>--attested</code>，见下方第 6 步）</td></tr>
+          <tr><td class="mono">.ai/VERSION</td><td>项目里这份框架是哪个版本装的；落后于 CLI 时 <code>ai doctor</code> 会提示 <code>ai init --update</code></td></tr>
+          <tr><td class="mono">.ai/interceptions.jsonl</td><td>被门禁拦下的事件留痕（只在被拦时写，已进 .gitignore）——拦截实例见 §④</td></tr>
+        </tbody>
+      </table>
+      <p class="note-inline">已有 AGENTS.md 的项目不会被覆盖：用 <code>ai init --force</code>，原文件自动备份；升级框架用 <code>ai init --update</code>（先备份，绝不碰 <code>.ai/changes/</code>）。</p>
+    </div>
+  </section>
+
+  <!-- ══════════ ② 真实需求 ══════════ -->
+  <section id="case">
+    <h2><span class="idx">②</span>真实需求：订单列表加「导出 CSV」</h2>
+    <p class="sub">
+      背景：运营每月对账要按客户 + 日期区间导出订单，现在只能用列表页一页页翻（每页 20 条）。
+      这个需求碰了接口、还要给 <code>t_order</code> 加索引，所以走完整流程 + 数据库两阶段确认。
+    </p>
+
+    <div class="player">
+      <button class="btn primary" id="case-play">❚❚ 暂停</button>
+      <button class="btn" id="case-prev">‹ 上一步</button>
+      <button class="btn" id="case-next">下一步 ›</button>
+      <button class="btn" id="case-replay">↻ 重播</button>
+      <span class="count" id="case-count">1 / 11</span>
+    </div>
+    <div class="bar"><i id="case-bar"></i></div>
+
+    <div class="case">
+      <ol class="rail" id="rail"></ol>
+      <div class="stage" id="stage"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ ③ 使用可见性 ══════════ -->
+  <section id="visible">
+    <h2><span class="idx">③</span>你怎么知道它真的在用</h2>
+    <p class="sub">
+      真正改代码的往往是 AI 工具而不是你，所以"是否被用到"要分三层回答：命令上的工牌（所有工具通用）、
+      Claude Code 会话里的徽标（有钩子的工具专属）、以及一本随时能翻的账。
+    </p>
+
+    <div class="grid2">
+      <div class="gcard">
+        <div class="hd"><b>① 每条命令一行工牌</b><span class="mono">所有 AI 工具通用 · 装完就有</span></div>
+        <div class="term"><div class="term-body">
+          <span class="ln"><span class="b1">◆ bright-ai-coding</span><span class="b2"> · ai-control v2.2.1 · ai ship · 本机第 7 次</span></span>
+        </div></div>
+        <div class="why">
+          终端里是彩色的（品牌青色 + 其余压暗）。脚本 / CI / AI 调用时它自动改走 <b>stderr</b>，
+          所以 stdout 的机器契约（单行大写结果标记）不受影响。<br>
+          关掉：<code>AI_CONTROL_QUIET=1</code>，或项目 <code>.ai/config.json</code> 里 <code>"banner": "off"</code>。
+        </div>
+      </div>
+
+      <div class="gcard">
+        <div class="hd"><b>② Claude Code 会话徽标</b><span class="mono">SessionStart 钩子 · 每次开会话打卡</span></div>
+        <div class="term"><div class="term-body">
+          <span class="ln d">每开一次新会话（以及 /clear、恢复、压缩后）触发，钩子输出两个字段：</span>
+          <span class="ln"><span class="b1">systemMessage</span><span class="b2">        ◆ bright-ai-coding · ai-control v2.2.1 · 本项目受管控 · 进行中变更 1 个（list-empty-hint）</span></span>
+          <span class="ln"><span class="b1">additionalContext</span><span class="b2">  本项目（order-center）已安装 ai-control 控制系统。进行中变更：</span></span>
+          <span class="ln"><span class="b2">                   list-empty-hint。未经用户确认不得写业务代码；用户同意后写确认留痕：</span></span>
+          <span class="ln"><span class="b2">                   ai confirm（用户自己敲）或 ai confirm --attested（用户已在对话里同意时代记）。</span></span>
+        </div></div>
+        <div class="why">
+          <code>systemMessage</code> 展示给你看，<code>hookSpecificOutput.additionalContext</code> 注入 Claude 上下文——
+          AI 一上来就知道自己在受管项目里，不用你提醒。<br>
+          Trae / Cursor 看不到这行（它们的 SessionStart 输出契约未确认，暂未装）；Kimi 只读 AGENTS.md。
+          但它们的<b>拦截类钩子照装</b>，而且推进流程必须调 <code>ai check / test / ship</code>，那些调用一样进账本。
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>③ <code>ai stats</code>：把账本读成答案<span class="tag">本页案例跑完后的真实账本</span></h3>
+      <div class="term" style="border-radius:10px">
+        <div class="term-bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span class="term-title">ai stats</span></div>
+        <div class="term-body" style="font-size:12.2px">
+<span class="ln d">本机使用记录（只在 ~/.ai-control/usage.jsonl，不联网、不上报；AI_CONTROL_USAGE=off 可关）</span>
+<span class="ln d">  首次使用  2026-09-17 14:58（累计 8 次，最近 7 天 8 次）</span>
+<span class="ln d">  非零退出  1 次（门禁拦截或失败；最近 7 天 1 次）</span>
+<span class="ln d">  最近一次  2026-09-17 14:58</span>
+<span class="ln"></span>
+<span class="ln d">  按命令    ai check 2 · ai new 2 · ai confirm 1 · ai init 1 · ai ship 1 · ai test 1</span>
+<span class="ln d">  按项目    order-center 8</span>
+<span class="ln"></span>
+<span class="ln d">  最近</span>
+<span class="ln d">    09-17 14:58  ai stats   -                     ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai new     list-empty-hint       ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai ship    order-export-csv      ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai test    order-export-csv      ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai confirm order-export-csv      ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai check   order-export-csv      ✓         order-center</span>
+<span class="ln d">    09-17 14:58  ai check   order-export-csv      ✗ exit=2  order-center</span>
+<span class="ln d">    09-17 14:58  ai new     order-export-csv      ✓         order-center</span>
+<span class="ln"></span>
+<span class="ln d">本项目（order-center）</span>
+<span class="ln d">  变更      进行中 1 个 · 已交付 1 个</span>
+<span class="ln d">  钩子拦截  0 次（还没拦过；记录见 .ai/interceptions.jsonl）</span>
+<span class="ln"></span>
+<span class="ln d">说明：这里统计的是 ai 命令被调用的次数与结果，不统计 AI 工具内部的每一次工具调用（那属于工具自己的日志）。</span>
+        </div>
+      </div>
+      <p class="note-inline">
+        注意这 8 条记录正是上一幕走完的 8 步（init → new → check 拦截 → check 通过 → confirm → test → ship → 下一个变更），
+        <code>✗ exit=2</code> 那行就是被门禁拦下的那次。<b>「钩子拦截」是这里最有说服力的数字</b>：
+        调用次数说明"有人跑过"，拦截次数说明"它真的拦下过东西"——上面这次是 0，
+        要看到非 0，去 §④ 的门禁实录。
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>开销与关闭<span class="tag">实测，不是估算</span></h3>
+      <table>
+        <thead><tr><th>环节</th><th class="mono">实测开销</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>ai</code> 命令（工牌 + 记账）</td><td class="mono">+1.25ms / 次</td><td>日志已到 2000 行上限的最坏情况；其中 21ms 是 node 启动本身</td></tr>
+          <tr><td>工牌一行</td><td class="mono">≈ 21 tokens</td><td>一个完整需求（约 7 条命令）≈ 147 tokens</td></tr>
+          <tr><td><code>SessionStart</code> 钩子</td><td class="mono">≈ 22ms / 会话</td><td>只在开新会话时跑一次，钩子自身 &lt;1ms</td></tr>
+          <tr><td>拦截留痕</td><td class="mono">0</td><td>只在被拦下那一刻写一行；文件超 2000 行自动裁剪</td></tr>
+        </tbody>
+      </table>
+      <p class="note-inline">
+        <code>AI_CONTROL_QUIET=1</code> 只关工牌；<code>AI_CONTROL_USAGE=off</code> 或项目 <code>.ai/config.json</code> 里
+        <code>"usage": "off"</code> 连记录一起关。写不进去时静默降级——日志出问题绝不拦住任何命令。
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════ ④ 门禁实录 ══════════ -->
+  <section id="gates">
+    <h2><span class="idx">④</span>门禁实录：七条拦截 + 一条软核验</h2>
+    <p class="sub">下面每一段都是本次演示里真实跑出来的原始输出。前五段是硬拦截（[FAIL] + 退出码 2）；最后一段刻意<b>不拦</b>，只列清单——两种都要有，否则门禁会变成打扰。</p>
+    <div class="grid2" id="gates-grid"></div>
+  </section>
+
+  <!-- ══════════ ⑤ 速查 ══════════ -->
+  <section id="cheat">
+    <h2><span class="idx">⑤</span>命令速查</h2>
+    <p class="sub">一共 7 个命令。前 6 个是日常流程，<code>doctor</code> 是出问题时的体检，<code>stats</code> 是回头看使用情况。</p>
+    <div class="term">
+      <div class="term-bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span class="term-title">ai help</span></div>
+      <div class="term-body" id="cheat-term"></div>
+      <div class="term-foot">退出码：0 = 通过 · 1 = 用法或环境错误 · 2 = 门禁拦截；结果信号固定为单行大写标记（CHECK_PASSED / CONFIRM_OK / TEST_PASSED / SHIP_GATES_PASSED / DOCTOR_OK），可直接给脚本解析。</div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>关于本页数据的说明。</b>本页所有终端输出均为真实运行捕获（框架版本 2.2.1），仅做了三处处理：
+      把演示项目的绝对路径缩写为 <code>~/order-center</code>；<code>ai sync</code> 的 14 行写入清单与 Maven 日志做了节选；
+      <code>ai stats</code> 里把捕获时用的临时账本路径写回它默认的位置 <code>~/.ai-control/usage.jsonl</code>。</p>
+    <p>案例各幕的工牌计数（本机第 2 ~ 7 次）来自同一个演示项目按上述顺序连续跑出来的账本，所以是连贯的；
+      §③ 的会话徽标取自同一项目。第 6 步的两条确认路径是同一个变更先后各确认一次的真实留痕（时间相邻），
+      两个终端块就是那两次的原始输出。演示项目跑在一台未安装 Maven 的机器上，因此用一个只产出 surefire 报告的轻量替身代替
+      <code>mvn</code>；<code>ai test</code> 的报告收割与 <code>ai ship</code> 的证据门禁走的是框架的真实代码路径。</p>
+  </footer>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   通用：终端逐行渲染（命令逐字打字，输出逐行浮现）
+   ══════════════════════════════════════════════════════════════ */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function lineEl(cls, text) {
+  const span = document.createElement('span');
+  span.className = 'ln';
+  const t = document.createElement('span');
+  t.className = cls;
+  t.textContent = text;
+  span.appendChild(t);
+  return span;
+}
+
+/**
+ * lines: [{ t: 'cmd'|'out'|'ok'|'dim'|'fail'|'note'|'banner', text }]
+ * cancelled: () => boolean，用于步骤切换时中断
+ */
+async function typeTerminal(host, lines, cancelled = () => false) {
+  host.innerHTML = '';
+  for (const L of lines) {
+    if (cancelled()) return;
+    if (L.t === 'cmd') {
+      const ln = document.createElement('span');
+      ln.className = 'ln';
+      const p = document.createElement('span');
+      p.className = 'p';
+      p.textContent = '$ ';
+      const c = document.createElement('span');
+      c.className = 'c';
+      const cur = document.createElement('span');
+      cur.className = 'cursor';
+      ln.append(p, c, cur);
+      host.appendChild(ln);
+      const text = L.text;
+      const per = Math.max(8, Math.min(26, 900 / Math.max(text.length, 1)));
+      for (let i = 1; i <= text.length; i++) {
+        if (cancelled()) return;
+        c.textContent = text.slice(0, i);
+        await sleep(text[i - 1] === ' ' ? per * 0.4 : per);
+      }
+      await sleep(120);
+      if (cancelled()) return;
+      cur.remove();
+    } else if (L.t === 'banner') {
+      // 工牌：品牌段青色、其余压暗——与终端里的实际着色一致
+      const ln = document.createElement('span');
+      ln.className = 'ln fade';
+      const cut = L.text.indexOf(' · ');
+      const head = document.createElement('span');
+      head.className = 'b1';
+      head.textContent = cut < 0 ? L.text : L.text.slice(0, cut);
+      ln.appendChild(head);
+      if (cut >= 0) {
+        const tail = document.createElement('span');
+        tail.className = 'b2';
+        tail.textContent = L.text.slice(cut);
+        ln.appendChild(tail);
+      }
+      host.appendChild(ln);
+      await sleep(130);
+    } else {
+      const map = { out: 'd', ok: 's', dim: 'd', fail: 'f', note: 'n' };
+      const ln = lineEl(map[L.t] || 'd', L.text);
+      ln.classList.add('fade');
+      host.appendChild(ln);
+      await sleep(L.t === 'out' || L.t === 'dim' ? 40 : 110);
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ① 安装
+   ══════════════════════════════════════════════════════════════ */
+const INSTALL = [
+  { t: 'cmd', text: 'npm install -g @brightliu/ai-control' },
+  { t: 'dim', text: 'added 1 package in 1.4s' },
+  { t: 'note', text: '' },
+  { t: 'cmd', text: 'cd order-center' },
+  { t: 'cmd', text: 'ai init' },
+  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai init · 本机第 1 次' },
+  { t: 'ok',  text: 'INIT_OK：已安装（stack=java）。日常命令: ai new / check / confirm / test / ship' },
+  { t: 'note', text: '' },
+  { t: 'cmd', text: 'ai sync' },
+  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai sync · 本机第 2 次' },
+  { t: 'ok',  text: 'SYNC_OK written=14 skipped=0' },
+  { t: 'dim', text: '  + .claude/settings.json（合并 3 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + CLAUDE.md' },
+  { t: 'dim', text: '  + .claude/agents/{agent-spec,agent-dba,agent-dev,agent-test}.md' },
+  { t: 'dim', text: '  + .claude/skills/{new-feature,ready-check,release-ship}/SKILL.md' },
+  { t: 'dim', text: '  + .workbuddy/skills/{ai-control-contract,agent-spec,agent-dba,agent-dev,agent-test}/SKILL.md' },
+  { t: 'note', text: 'WorkBuddy：项目级技能已写入 .workbuddy/skills/，重启 WorkBuddy 生效。' },
+  { t: 'note', text: 'Codex / Cursor / Kimi / Qoder 原生读 AGENTS.md，无需操作。' },
+  { t: 'ok',  text: '' },
+  { t: 'ok',  text: '装完了 —— 装完之后，每条 ai 命令开头都会先打一行 bright-ai-coding 工牌（见上面两处青色行）。' },
+];
+
+const instTerm = document.getElementById('inst-term');
+const instFoot = document.getElementById('inst-foot');
+const instCount = document.getElementById('inst-count');
+const instBtn = document.getElementById('inst-play');
+let instToken = 0, instRunning = false;
+
+async function runInstall() {
+  const my = ++instToken;
+  instRunning = true;
+  instCount.textContent = '播放中…';
+  instFoot.textContent = '三条命令：装工具 → 装进项目 → 生成适配物';
+  instBtn.textContent = '❚❚ 停止';
+  await typeTerminal(instTerm, INSTALL, () => my !== instToken);
+  if (my !== instToken) return;
+  instRunning = false;
+  instBtn.textContent = '↻ 重播';
+  instCount.textContent = '完成';
+  instFoot.textContent = '之后你只做两件事：确认变更单、确认数据库改动。其他检查由内置门禁完成。';
+}
+
+function stopInstall() {
+  instToken++;
+  instRunning = false;
+  instBtn.textContent = '▶ 播放';
+  instCount.textContent = '已停止';
+}
+
+instBtn.addEventListener('click', () => {
+  if (instRunning) stopInstall();
+  else runInstall();
+});
+
+/* ══════════════════════════════════════════════════════════════
+   ② 真实需求：11 步
+   ══════════════════════════════════════════════════════════════ */
+const CASE_STEPS = [
+  { title: '你说需求',            dwell: 2600 },
+  { title: 'AI 影响探测 + 判级',   dwell: 3000 },
+  { title: 'ai new 建变更骨架',    dwell: 1600 },
+  { title: '反例：没补全就 check', dwell: 2600 },
+  { title: '补齐变更单，输出确认单', dwell: 5200 },
+  { title: '确认：cli 或代记',      dwell: 3600 },
+  { title: '数据库两阶段确认',      dwell: 5200 },
+  { title: '实现',                dwell: 3200 },
+  { title: 'ai test 跑测试',       dwell: 2600 },
+  { title: 'ai ship 证据门禁',     dwell: 3200 },
+  { title: '交付与复盘',          dwell: 5000 },
+];
+
+const stage = document.getElementById('stage');
+const rail = document.getElementById('rail');
+const caseCount = document.getElementById('case-count');
+const caseBar = document.getElementById('case-bar');
+const casePlayBtn = document.getElementById('case-play');
+
+let cur = 0, playing = true, token = 0, timer = null;
+
+const terminated = (my) => my !== token;
+
+function renderRail() {
+  rail.innerHTML = '';
+  CASE_STEPS.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.className = i === cur ? 'on' : (i < cur ? 'done' : '');
+    li.innerHTML = '<span class="num">' + String(i + 1).padStart(2, '0') + '</span><span>' + s.title + '</span>';
+    li.addEventListener('click', () => { goTo(i, false); });
+    rail.appendChild(li);
+  });
+}
+
+function termBlock(title) {
+  return '' +
+    '<div class="term">' +
+      '<div class="term-bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i>' +
+      '<span class="term-title">' + title + '</span></div>' +
+      '<div class="term-body" id="term-body"></div>' +
+    '</div>';
+}
+
+async function drawStep(i, my) {
+  stage.innerHTML = '';
+  switch (i) {
+
+    /* ── 1 ── */
+    case 0: {
+      stage.innerHTML =
+        '<div class="msg you fade"><span class="who">你</span><div class="say">' +
+          '订单列表要加个「导出」。运营每月对账要按客户 + 日期区间导订单，现在只能一页页翻，一个客户一个月要翻上百页。' +
+        '</div></div>' +
+        '<div class="msg ai fade" style="animation-delay:.35s"><span class="who">AI</span><div class="say">' +
+          '收到。我先看代码，别急着写——这个需求要碰接口还是表，得先确认清楚，不然做完了验收标准都是猜的。' +
+        '</div></div>';
+      break;
+    }
+
+    /* ── 2 ── */
+    case 1: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>影响探测结果<span class="tag">检索现有代码</span></h3>' +
+          '<table><thead><tr><th class="mono">碰到什么</th><th>具体对象</th></tr></thead><tbody>' +
+          '<tr><td class="mono">文件</td><td>OrderController / OrderService / OrderMapper(.xml) / OrderListView.vue</td></tr>' +
+          '<tr><td class="mono">接口</td><td>新增 <code>GET /api/orders/export</code></td></tr>' +
+          '<tr><td class="mono">数据表</td><td><code>t_order</code> 新增复合索引 <code>idx_tenant_created(tenant_id, created_at, customer_id)</code></td></tr>' +
+          '<tr><td class="mono">页面</td><td><code>/order/list</code> 筛选区加导出按钮</td></tr>' +
+          '</tbody></table>' +
+        '</div>' +
+        '<div class="msg ai fade" style="animation-delay:.5s"><span class="who">AI</span><div class="say">' +
+          '碰了 API 契约、还要动 <code>t_order</code> 的索引 → 按判级规则这是<b>完整流程</b>，另外要走数据库两阶段确认。' +
+          '给你一张单子，你看完点头我再动代码。' +
+        '</div></div>';
+      break;
+    }
+
+    /* ── 3 ── */
+    case 2: {
+      stage.innerHTML = termBlock('ai new order-export-csv');
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai new order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai new · 本机第 2 次' },
+        { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/proposal.md' },
+        { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/test-cases.md' },
+        { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/specs/order-export-csv/spec.md' },
+        { t: 'note', text: '' },
+        { t: 'out', text: '复制给 AI 助手：' },
+        { t: 'out', text: '请读取 .ai/changes/order-export-csv。' },
+        { t: 'out', text: '先做影响探测（检索代码列出触碰的文件/表/接口），据此补全影响范围、规格场景和验收用例，答掉待确认问题。' },
+        { t: 'out', text: '涉及数据库先走数据库工程师两阶段确认（.ai/agents/agent-dba.md）；涉及跨模块/接口兼容按模板补建 design.md。' },
+        { t: 'out', text: '不要直接写代码；确认单需标注级别与判级理由。用户确认后写留痕：ai confirm order-export-csv（用户自己敲），或用户已在对话里同意时代记 ai confirm order-export-csv --attested。禁止不带 --attested 代跑。' },
+      ], () => terminated(my));
+      break;
+    }
+
+    /* ── 4 ── */
+    case 3: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>这一步演示什么<span class="tag">门禁不是摆设</span></h3>' +
+        '<p>骨架里留了 4 个必答问题（权限、数据表、API 契约、验收标准）。AI 要是装没看见就想去拿确认，<code>check</code> 直接把门关上——<b>有未答问题就不许出确认单</b>。</p></div>' +
+        termBlock('ai check order-export-csv（变更单尚未补全）');
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai check order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai check · 本机第 3 次' },
+        { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: 访问控制：本功能的权限要求是什么？' },
+        { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: 数据表：涉及哪些表/字段/索引？（涉及则必须走数据库两阶段确认）' },
+        { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: API 契约：路径、请求、响应、分页、错误码？（遵循 rules/20-api.md）' },
+        { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: 验收标准：最小可验证路径、失败路径、越权场景分别是什么？' },
+        { t: 'fail', text: '[FAIL] check 未通过（4 项）' },
+      ], () => terminated(my));
+      break;
+    }
+
+    /* ── 5 ── */
+    case 4: {
+      stage.innerHTML =
+        termBlock('ai check order-export-csv（补全之后）') +
+        '<div class="card" style="margin-top:14px"><h3>AI 递上来的确认单<span class="tag">完整流程 · 判级理由已标注</span></h3>' +
+          '<dl class="kv">' +
+            '<dt>级别</dt><dd>完整流程（<code>ai new</code> 默认三件套：proposal + test-cases + spec）</dd>' +
+            '<dt>判级理由</dt><dd>新增 HTTP 接口 + 触碰 <code>t_order</code> 索引并补迁移脚本</dd>' +
+            '<dt>改什么</dt><dd>列表页导出按钮、<code>GET /api/orders/export</code> 流式 CSV、单次上限 5 万行、新增索引</dd>' +
+            '<dt>非目标</dt><dd>不做异步导出任务、不导出明细行、不做导出历史表</dd>' +
+          '</dl>' +
+          '<h3 style="margin-top:16px">验收用例<span class="tag">随变更单一起确认</span></h3>' +
+          '<table><thead><tr><th class="mono">ID</th><th class="mono">类型</th><th>验证什么</th><th class="mono">验证方式</th></tr></thead><tbody>' +
+            '<tr><td class="mono">TC-01</td><td class="mono">正常流</td><td>按客户 + 日期区间导出，行数与查询一致</td><td class="mono">单测</td></tr>' +
+            '<tr><td class="mono">TC-02</td><td class="mono">异常流</td><td>命中 50,001 行 → 400 ORDER_EXPORT_TOO_LARGE，不产生部分流</td><td class="mono">单测</td></tr>' +
+            '<tr><td class="mono">TC-03</td><td class="mono">边界</td><td>区间内 0 条 → 仅 BOM + 表头</td><td class="mono">单测</td></tr>' +
+            '<tr><td class="mono">TC-04</td><td class="mono">权限</td><td>无 order:list:view → 403，不返回订单数据</td><td class="mono">单测</td></tr>' +
+            '<tr><td class="mono">TC-05</td><td class="mono">空态</td><td>筛选结果为空时按钮置灰并提示，不发请求</td><td class="mono">手动</td></tr>' +
+          '</tbody></table>' +
+          '<p class="note-inline">涉及 API ⇒ 必须有异常流用例；涉及页面 ⇒ 必须有权限态与空态用例；碰表/接口 ⇒ 至少要有一条自动化用例（全手动会让证据链失效）——这三条都是 <code>check</code> 的硬性检查项。</p>' +
+        '</div>';
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai check order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai check · 本机第 4 次' },
+        { t: 'ok',  text: 'CHECK_PASSED：可向用户输出确认单（标注级别与判级理由）。' },
+      ], () => terminated(my));
+      break;
+    }
+
+    /* ── 6 ── */
+    case 5: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>确认：两条路，门禁强度一样<span class="tag">留痕</span></h3>' +
+        '<p><code>ai confirm</code> 会在变更目录里写下 <code>confirmed.json</code>：谁确认的、什么时候、当时哪个提交、以及<b>变更单内容的哈希</b>——这是后面 <code>ship</code> 的机械前置。它有两种走法，区别只在<b>留痕怎么写</b>，不在门禁严不严。</p></div>' +
+        termBlock('① 终端里你自己敲（source: cli）');
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai confirm order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai confirm · 本机第 5 次' },
+        { t: 'ok',  text: 'CONFIRM_OK：已留痕（by=liuweiliang）。开始实现；proposal/test-cases 再改动需重新确认。' },
+        { t: 'note', text: '' },
+        { t: 'dim', text: '~/order-center/.ai/changes/order-export-csv/confirmed.json' },
+        { t: 'dim', text: '{' },
+        { t: 'dim', text: '  "by": "liuweiliang",' },
+        { t: 'dim', text: '  "at": "2026-09-17T07:36:15.074Z",' },
+        { t: 'dim', text: '  "sha": "6df8baa3…",' },
+        { t: 'dim', text: '  "hash": "a5907778…",' },
+        { t: 'dim', text: '  "source": "cli"' },
+        { t: 'dim', text: '}' },
+      ], () => terminated(my));
+      await sleep(240);
+      if (terminated(my)) return;
+      stage.insertAdjacentHTML('beforeend',
+        '<div class="term fade" style="margin-top:14px">' +
+          '<div class="term-bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i>' +
+          '<span class="term-title">② GUI / app 场景：你在对话里回一句“确认”，AI 代记（source: ai-attested）</span></div>' +
+          '<div class="term-body">' +
+            '<span class="ln"><span class="p">$ </span><span class="c">ai confirm order-export-csv --attested</span></span>' +
+            '<span class="ln s">CONFIRM_OK：已留痕（by=liuweiliang）。开始实现；proposal/test-cases 再改动需重新确认。</span>' +
+            '<span class="ln s">来源：ai-attested（AI 代记）——留痕据此标注，门禁强度不变。</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card fade" style="margin-top:14px"><h3>同一份留痕，两种来源标注<span class="tag">门禁只看"确认过没有"</span></h3>' +
+          '<table><thead><tr><th>你在哪</th><th>怎么完成确认</th><th class="mono">留痕里写的</th></tr></thead><tbody>' +
+            '<tr><td>终端</td><td>自己敲 <code>ai confirm &lt;id&gt;</code></td><td class="mono" style="white-space:nowrap">source: "cli"</td></tr>' +
+            '<tr><td>app / GUI</td><td>你说一句"确认"，AI 代记 <code>--attested</code></td><td class="mono" style="white-space:nowrap">source: "ai-attested"</td></tr>' +
+          '</tbody></table>' +
+          '<p class="note-inline">app / GUI 指 Codex、Cursor、WorkBuddy 这类编辑器 / 助手界面——你不用切终端。为什么不再要求"必须你本人敲"：AI 有完整的 shell 权限，同机同会话里"证明是人按的"在原理上做不到。但两条伪造路径都被钩子堵死了：<b>冒充</b>你按（不带 <code>--attested</code>）会拦，<b>手写 <code>confirmed.json</code> 伪造留痕</b>也会拦（见 §④ 第 ⑥、⑦ 条）——AI 想往下走就只能如实代记。<code>ai ship</code> 开头会打出"确认来源"这一行供你核对。</p></div>');
+      break;
+    }
+
+    /* ── 7 ── */
+    case 6: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>数据库两阶段确认：要动表，点两次头<span class="tag">AGENTS.md 第 2 条确认点</span></h3>' +
+        '<p>第一次确认的是<b>设计</b>：为什么是这个索引、字段顺序为什么是 (tenant_id, created_at, customer_id)、会不会锁表、有没有更小的替代方案。' +
+        '确认之后 AI 才产出变更确认包；<b>第二次</b>确认的是可执行的东西——目标 DDL、回滚 SQL、联动清单。再点头，才允许执行或写 migration。</p></div>' +
+        '<div class="card fade" style="animation-delay:.3s"><h3>AI 的输出：DDL + 回滚<span class="tag">一起给</span></h3>' +
+        '<pre class="code"><span class="cm">-- V20260917__idx_order_tenant_created.sql</span>\n' +
+        '<span class="cm">-- 只新增索引，不改字段/主键</span>\n' +
+        '<span class="add">CREATE INDEX idx_tenant_created ON t_order (tenant_id, created_at, customer_id);</span>\n\n' +
+        '<span class="cm">-- 回滚：DROP INDEX idx_tenant_created ON t_order;</span></pre>' +
+        '<p class="note-inline">只有新增索引，没有 <code>DROP</code>/<code>TRUNCATE</code>，因此不需要预建 <code>原表名_copy_yyyyMMdd</code> 备份；这条判断也要写进交付说明。</p></div>';
+      break;
+    }
+
+    /* ── 8 ── */
+    case 7: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>实现：按确认单的最小切片走<span class="tag">5 个文件 + 1 个 DTO</span></h3>' +
+        '<pre class="code">' +
+        '<span class="cm"># OrderController.java</span>\n' +
+        '<span class="hl">+  @GetMapping("/export")</span>\n' +
+        '<span class="hl">+  public void export(String customerId, String beginDate, String endDate,</span>\n' +
+        '<span class="hl">+                     HttpServletResponse response) {</span>\n' +
+        '<span class="hl">+    orderExportService.exportCsv(customerId, beginDate, endDate, response);</span>\n' +
+        '<span class="hl">+  }</span>\n\n' +
+        '<span class="cm"># OrderExportService.java（新增）</span>\n' +
+        '<span class="hl">+  long total = orderMapper.countByCondition(...);</span>\n' +
+        '<span class="hl">+  if (total &gt; MAX_EXPORT_ROWS) {   // 50000</span>\n' +
+        '<span class="hl">+    response.setStatus(400);</span>\n' +
+        '<span class="hl">+    write(response, "{\\"code\\":\\"ORDER_EXPORT_TOO_LARGE\\",…}");</span>\n' +
+        '<span class="hl">+    return;</span>\n' +
+        '<span class="hl">+  }</span>\n' +
+        '<span class="hl">+  StringBuilder sb = new StringBuilder("\\uFEFF");  // BOM，Excel 不乱码</span>' +
+        '</pre>' +
+        '<p class="note-inline">包一层 DTO 是不在确认单里的"顺手"决定——这一点后面 <code>ai ship</code> 会提示，但不会拦。</p></div>';
+      break;
+    }
+
+    /* ── 9 ── */
+    case 8: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>证据从哪来<span class="tag">测试报告，不是 AI 的一句话</span></h3>' +
+        '<p>测试方法名里带用例编号（<code>test_TC01_…</code>），<code>ai test</code> 跑完把本次新产生的报告收割进 <code>test-results/order-export-csv/</code> 按变更隔离——多个需求并行时不会串号。</p></div>' +
+        termBlock('ai test order-export-csv');
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai test order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai test · 本机第 6 次' },
+        { t: 'out', text: '==> mvn test' },
+        { t: 'dim', text: '[INFO] --- surefire:3.2.5:test (default-test) @ order-center ---' },
+        { t: 'dim', text: '[INFO] Running com.example.order.OrderExportServiceTest' },
+        { t: 'dim', text: '[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.284 s' },
+        { t: 'dim', text: '[INFO] BUILD SUCCESS' },
+        { t: 'ok',  text: '已把 1 份新报告收入 test-results/order-export-csv/（按变更隔离）' },
+        { t: 'ok',  text: 'TEST_PASSED（JUnit 报告即验收证据，ai ship 时核对）' },
+      ], () => terminated(my));
+      break;
+    }
+
+    /* ── 10 ── */
+    case 9: {
+      stage.innerHTML = termBlock('ai ship order-export-csv');
+      await typeTerminal(document.getElementById('term-body'), [
+        { t: 'cmd', text: 'ai ship order-export-csv' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai ship · 本机第 7 次' },
+        { t: 'out', text: '确认来源：cli（用户本人敲的）' },
+        { t: 'ok',  text: 'EVIDENCE_OK：报告 1 份，非手动用例 4 条全部有通过记录。' },
+        { t: 'note', text: '提示：本变更涉及数据库，建议在新会话用 .ai/templates/review-prompt.md 做一次独立审查。' },
+        { t: 'ok',  text: 'SHIP_GATES_PASSED：门禁全部通过（已写入 shipped.json）。手动用例结果与残余风险写入交付说明。' },
+      ], () => terminated(my));
+      await sleep(300);
+      if (terminated(my)) return;
+      stage.insertAdjacentHTML('beforeend',
+        '<div class="card fade" style="margin-top:14px"><h3>这一秒里 <code>ship</code> 核对了什么<span class="tag">全部机械判定</span></h3>' +
+        '<table><thead><tr><th class="mono">检查项</th><th>依据</th></tr></thead><tbody>' +
+        '<tr><td>确认过没有</td><td><code>confirmed.json</code> 存在</td></tr>' +
+        '<tr><td>确认来源记没记</td><td><code>source</code> 字段如实标注 <code>cli</code> / <code>ai-attested</code>，<code>ship</code> 开头回显这一行——门禁强度不因来源而变，只让来源可见</td></tr>' +
+        '<tr><td>确认后变更单被偷改过没有</td><td>proposal / test-cases / specs 的<b>内容哈希</b>是否仍等于确认时的哈希（不用 mtime，换机器、git clone 不会假失效）</td></tr>' +
+        '<tr><td>报告在不在、是不是本次新跑的</td><td>报告目录存在，且最新报告时间晚于确认时间</td></tr>' +
+        '<tr><td>有没有挂掉的测试</td><td>JUnit XML 里没有 <code>&lt;failure&gt;</code> / <code>&lt;error&gt;</code></td></tr>' +
+        '<tr><td>每条非手动用例有没有通过记录</td><td>把 test-cases.md 里的 TC 编号逐个去报告里找，缺一条就拦</td></tr>' +
+        '<tr><td>本变更有没有把密钥写进去</td><td>扫描 diff 新增行（AWS Key / 私钥 / GitHub、npm、Slack Token / 带密码连接串）</td></tr>' +
+        '</tbody></table></div>');
+      break;
+    }
+
+    /* ── 11 ── */
+    case 10: {
+      stage.innerHTML =
+        '<div class="card fade"><h3>交付说明：只列真的发生变化的项<span class="tag">手动用例逐条报告</span></h3>' +
+        '<dl class="kv">' +
+          '<dt>变更</dt><dd><code>order-export-csv</code> · 完整流程 · 已交付</dd>' +
+          '<dt>改动的文件</dt><dd>OrderController.java、OrderExportService.java、OrderMapper.java、OrderMapper.xml、OrderListView.vue、V20260917__idx_order_tenant_created.sql</dd>' +
+          '<dt>数据库</dt><dd>新增索引 <code>idx_tenant_created</code>；回滚：<code>DROP INDEX idx_tenant_created ON t_order;</code></dd>' +
+          '<dt>自动化用例</dt><dd>TC-01 ~ TC-04 全部通过（JUnit 报告，4/4）</dd>' +
+          '<dt>手动用例</dt><dd>TC-05 空态：已在 Chrome 128 验证，筛选为空时按钮置灰并提示"当前筛选没有可导出的数据"，未发起请求</dd>' +
+          '<dt>残余风险</dt><dd>导出走同步流式返回，5 万行在弱网下首字节延迟约 2~3 秒；如需优化再开一个变更做游标分批</dd>' +
+        '</dl></div>' +
+        '<div class="card fade" style="animation-delay:.25s"><h3>你在这个需求里只做了两件事</h3>' +
+          '<ul class="plain">' +
+            '<li>看了一眼确认单，敲了 <code>ai confirm order-export-csv</code>（约 2 分钟）</li>' +
+            '<li>数据库设计第一次点头、DDL 与回滚 SQL 第二次点头（约 3 分钟）</li>' +
+          '</ul>' +
+          '<p class="note-inline">其余检查——用例覆盖全不全、报告在不在、有没有失败、有没有密钥、声明和实际改动对不对得上——都是命令在做。</p>' +
+        '</div>' +
+        '<div class="card fade" style="animation-delay:.45s"><h3>顺带一提：这个需求中途还差点"越级"</h3>' +
+          '<p>同一时间 AI 还开了个 lite 变更（改个空态文案，本该 30 秒走完），排查后发现要区分"没有数据"和"加载失败"，列表接口必须补返回 <code>total</code>——于是它碰了 API 契约。<code>check</code> 当场按住：</p>' +
+          '<pre class="code"><span class="del">[FAIL] lite 变更不允许涉及 API 契约；运行 ai new list-empty-hint --upgrade 升级为完整流程（保留已写内容）</span>\n' +
+          '<span class="del">[FAIL] 涉及数据库/API 的变更必须至少 1 条非手动（自动化）用例——发布门禁凭 JUnit 报告验收，全手动会让证据链失效</span></pre>' +
+          '<p>正确做法是升级而不是绕：<code>ai new list-empty-hint --upgrade</code> 会把 lite 标记摘掉、补上 spec，已写内容全部保留，然后重新走确认。<b>快速通道不是逃生通道。</b></p></div>';
+      break;
+    }
+  }
+}
+
+async function goTo(i, autoplay) {
+  cur = Math.max(0, Math.min(CASE_STEPS.length - 1, i));
+  const my = ++token;
+  clearTimeout(timer);
+  renderRail();
+  caseCount.textContent = (cur + 1) + ' / ' + CASE_STEPS.length;
+  caseBar.style.width = ((cur + 1) / CASE_STEPS.length * 100) + '%';
+  await drawStep(cur, my);
+  if (terminated(my)) return;
+  if (playing && autoplay !== false && cur < CASE_STEPS.length - 1) {
+    timer = setTimeout(() => goTo(cur + 1, true), CASE_STEPS[cur].dwell);
+  } else if (playing && cur === CASE_STEPS.length - 1) {
+    playing = false;
+    casePlayBtn.textContent = '▶ 播放';
+  }
+}
+
+casePlayBtn.addEventListener('click', () => {
+  if (playing) {
+    playing = false;
+    token++;
+    clearTimeout(timer);
+    casePlayBtn.textContent = '▶ 播放';
+  } else {
+    playing = true;
+    casePlayBtn.textContent = '❚❚ 暂停';
+    goTo(cur === CASE_STEPS.length - 1 ? 0 : cur, true);
+  }
+});
+document.getElementById('case-next').addEventListener('click', () => { token++; clearTimeout(timer); goTo(cur + 1, false); });
+document.getElementById('case-prev').addEventListener('click', () => { token++; clearTimeout(timer); goTo(cur - 1, false); });
+document.getElementById('case-replay').addEventListener('click', () => {
+  token++; clearTimeout(timer); playing = true; casePlayBtn.textContent = '❚❚ 暂停'; goTo(0, true);
+});
+
+/* ══════════════════════════════════════════════════════════════
+   ③ 门禁实录
+   ══════════════════════════════════════════════════════════════ */
+const GATES = [
+  {
+    title: '① 变更单没补全就想让人确认',
+    cmd: 'ai check order-export-csv',
+    why: '门禁只认"## 待确认问题"章节里以 <code>-</code> 开头的条目，凡不含"已确认/已解决/无待确认"的就算未答。<b>有未答问题就不给出确认单</b>——这是设计意图，绕不过去，只能把问题真问清。',
+    lines: [
+      ['f', '[FAIL] 待确认问题未答（proposal.md）: 访问控制：本功能的权限要求是什么？'],
+      ['f', '[FAIL] 待确认问题未答（proposal.md）: 数据表：涉及哪些表/字段/索引？（涉及则必须走数据库两阶段确认）'],
+      ['f', '[FAIL] 待确认问题未答（proposal.md）: API 契约：路径、请求、响应、分页、错误码？（遵循 rules/20-api.md）'],
+      ['f', '[FAIL] 待确认问题未答（proposal.md）: 验收标准：最小可验证路径、失败路径、越权场景分别是什么？'],
+      ['f', '[FAIL] check 未通过（4 项）'],
+    ],
+  },
+  {
+    title: '② 还没确认就想交付',
+    cmd: 'ai ship order-export-csv',
+    why: '"我确认了"必须留下可审计的痕迹。没有 <code>confirmed.json</code> 就没有交付资格——这是 ship 的第一道前置。提示里同时给出两条出路：终端用户自己敲，或 app 场景由你在对话里回一句同意后 AI 代记。',
+    lines: [['f', '[FAIL] 变更未确认：向用户输出确认单。终端里由用户敲 ai confirm order-export-csv；GUI/app 场景可让用户在对话里回一句同意，再代记 ai confirm order-export-csv --attested']],
+  },
+  {
+    title: '③ 确认之后又偷改了变更单',
+    cmd: 'ai ship order-export-csv',
+    why: '用<b>内容哈希</b>而不是文件时间戳判定。改一个字，确认即刻失效，得重新找你点头——把"先骗到确认，回头再改范围"这条路堵死。（用 mtime 会在 git clone / 换机器后全体确认假失效，团队场景不可用，所以改成了哈希。）',
+    lines: [['f', '[FAIL] 确认已过期：proposal/test-cases/specs 在确认后被修改；重新向用户确认并运行 ai confirm order-export-csv']],
+  },
+  {
+    title: '④ 拿确认之前的旧报告顶包',
+    cmd: 'ai ship order-export-csv',
+    why: '报告必须比确认时间新。上一次迭代、或别的变更残留的报告都算不成本次证据——AI 说"测试过了"没用，得是本次确认之后跑出来的报告。',
+    lines: [['f', '[FAIL] 测试报告早于本变更的确认时间——疑似旧报告；重跑 ai test 后再 ship']],
+  },
+  {
+    title: '⑤ lite 变更里偷偷夹带接口改动',
+    cmd: 'ai check list-empty-hint',
+    why: '小需求想走 30 秒快速通道，但影响范围里写了 API 契约 → 直接拦，并告诉你正确的出路（升级，保留已写内容）。同一道门还有一条：碰表/接口却全是手动用例也会被拦，否则证据门禁会因"全手动豁免"而失效。',
+    lines: [
+      ['f', '[FAIL] lite 变更不允许涉及 API 契约；运行 ai new list-empty-hint --upgrade 升级为完整流程（保留已写内容）'],
+      ['f', '[FAIL] 涉及数据库/API 的变更必须至少 1 条非手动（自动化）用例——发布门禁凭 JUnit 报告验收，全手动会让证据链失效'],
+      ['f', '[FAIL] check 未通过（2 项）'],
+    ],
+  },
+  {
+    title: '⑥ AI 冒充你敲确认（钩子当场按住手）',
+    cmd: 'ai confirm &lt;id&gt;  ← 由 AI 发起',
+    why: '确认留痕的意义在于"有人真的点过头"。AI 不带 <code>--attested</code> 去敲，等于冒充你本人——<code>guard-bash</code> 钩子直接拦下（exit 2），并<b>回显真实的变更名</b>，AI 只能把完整命令原样交给你。若你已在对话里同意，就改用 <code>--attested</code> 如实代记：放行，但留痕写明来源。<br>装了钩子的<b>六个工具都生效</b>——它们各写一份配置文件，调用的是同一份守卫脚本。',
+    lines: [
+      ['f', '[ai-control] 已拦截：不带 --attested 的 ai confirm 表示「用户本人在终端敲的」，AI 不得冒充。'],
+      ['d', '  · 若用户已在对话里明确同意 → 改用：ai confirm order-export-csv --attested（留痕标注 source: ai-attested）'],
+      ['d', '  · 若还没确认 → 向用户输出确认单，把这条交给用户自己敲：ai confirm order-export-csv'],
+    ],
+  },
+  {
+    title: '⑦ AI 手写留痕伪造确认（钩子拦住第二条路）',
+    cmd: 'Write .ai/changes/&lt;id&gt;/confirmed.json',
+    why: '只拦"冒充敲命令"还不够：<code>.ai/</code> 整体在写入放行名单里（那是给规则、模板、配置用的），AI 完全可以绕开命令、<b>直接手写一份 <code>confirmed.json</code></b> 并把 source 写成 <code>"cli"</code>——留痕就撒谎了。所以留痕文件被单独列为例外，只能由 <code>ai confirm</code> / <code>ai ship</code> 生成。',
+    lines: [
+      ['f', '[ai-control] 已拦截：.ai/changes/order-export-csv/confirmed.json 是确认/交付留痕，只能由 ai confirm / ai ship 生成。它记录"谁在什么时间确认了哪个版本的变更单"——手写它等于伪造用户确认。'],
+    ],
+  },
+  {
+    title: '⑦ 软核验：声明和实际改动对不上（只提示不拦）',
+    cmd: 'ai ship order-export-csv',
+    why: '这一刻改动的文件里有没写进影响范围的。这里<b>刻意不拦</b>：硬拦会造成"改文件 → 补声明 → 确认失效 → 重新确认"的死循环式打扰。它只列清单，交给你和独立审查看。',
+    lines: [
+      ['s', 'EVIDENCE_OK：报告 1 份，非手动用例 4 条全部有通过记录。'],
+      ['n', '注意：以下改动未在影响范围声明（软核验，不拦截）：'],
+      ['d', '  ? src/main/java/com/example/order/dto/OrderExportRow.java'],
+      ['d', '  ? src/main/java/com/example/order/mapper/OrderMapper.java'],
+      ['s', 'SHIP_GATES_PASSED：门禁全部通过（已写入 shipped.json）。'],
+    ],
+  },
+];
+
+const gatesGrid = document.getElementById('gates-grid');
+GATES.forEach((g) => {
+  const el = document.createElement('div');
+  el.className = 'gcard';
+  el.innerHTML =
+    '<div class="hd"><b>' + g.title + '</b><span class="mono">' + g.cmd + '</span></div>' +
+    '<div class="term"><div class="term-body">' +
+      g.lines.map(([k, t]) => '<span class="ln ' + k + '">' + t.replace(/</g, '&lt;') + '</span>').join('') +
+    '</div></div>' +
+    '<div class="why">' + g.why + '</div>';
+  gatesGrid.appendChild(el);
+});
+
+/* ══════════════════════════════════════════════════════════════
+   ④ ai help
+   ══════════════════════════════════════════════════════════════ */
+document.getElementById('cheat-term').innerHTML = [
+  'ai —— 控制系统统一入口（npm 全局命令）',
+  '',
+  '  ai init [--stack &lt;java|go|php|vue|react|node|mixed&gt;] [--update|--force]   安装/更新到当前项目',
+  '  ai new &lt;id&gt; [--lite|--upgrade]                          建变更骨架（lite 两件套）',
+  '  ai check &lt;id&gt;                                           契约门禁：影响范围/lite越界/用例覆盖/待确认',
+  '  ai confirm &lt;id&gt; [--attested]                            用户确认后留痕（by/at/sha/source），ship 的前置',
+  '  ai test [&lt;id&gt;]                                          跑项目测试（带 id 时报告按变更隔离）',
+  '  ai ship &lt;id&gt; [报告目录...]                               证据门禁：报告直查 + 高风险提示',
+  '  ai sync [--force]                                       导出 Claude/WorkBuddy 适配物',
+  '  ai doctor                                               环境体检',
+  '  ai stats                                                本机使用统计（跑了多少次、拦了几次）',
+].map((l) => '<span class="ln d">' + l + '</span>').join('');
+
+/* ══════════════════════════════════════════════════════════════
+   启动
+   ══════════════════════════════════════════════════════════════ */
+renderRail();
+goTo(0, true);
+setTimeout(runInstall, 700);
+</script>
+</body>
+</html>
