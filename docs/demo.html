@@ -254,7 +254,7 @@
   <!-- ══════════ ① 安装 ══════════ -->
   <section id="install">
     <h2><span class="idx">①</span>安装：三条命令</h2>
-    <p class="sub">装工具（一次性）、装进项目、给 Claude Code / WorkBuddy 生成适配物。改文案这类小事不需要任何额外步骤。</p>
+    <p class="sub">装工具（一次性）、装进项目、给六个 AI 工具生成钩子与适配物。改文案这类小事不需要任何额外步骤。</p>
 
     <div class="player">
       <button class="btn primary" id="inst-play">▶ 播放</button>
@@ -320,7 +320,7 @@
       <div class="gcard">
         <div class="hd"><b>① 每条命令一行工牌</b><span class="mono">所有 AI 工具通用 · 装完就有</span></div>
         <div class="term"><div class="term-body">
-          <span class="ln"><span class="b1">◆ bright-ai-coding</span><span class="b2"> · ai-control v2.2.1 · ai ship · 本机第 7 次</span></span>
+          <span class="ln"><span class="b1">◆ bright-ai-coding</span><span class="b2"> · ai-control v2.3.0 · ai ship · 本机第 7 次</span></span>
         </div></div>
         <div class="why">
           终端里是彩色的（品牌青色 + 其余压暗）。脚本 / CI / AI 调用时它自动改走 <b>stderr</b>，
@@ -333,7 +333,7 @@
         <div class="hd"><b>② Claude Code 会话徽标</b><span class="mono">SessionStart 钩子 · 每次开会话打卡</span></div>
         <div class="term"><div class="term-body">
           <span class="ln d">每开一次新会话（以及 /clear、恢复、压缩后）触发，钩子输出两个字段：</span>
-          <span class="ln"><span class="b1">systemMessage</span><span class="b2">        ◆ bright-ai-coding · ai-control v2.2.1 · 本项目受管控 · 进行中变更 1 个（list-empty-hint）</span></span>
+          <span class="ln"><span class="b1">systemMessage</span><span class="b2">        ◆ bright-ai-coding · ai-control v2.3.0 · 本项目受管控 · 进行中变更 1 个（list-empty-hint）</span></span>
           <span class="ln"><span class="b1">additionalContext</span><span class="b2">  本项目（order-center）已安装 ai-control 控制系统。进行中变更：</span></span>
           <span class="ln"><span class="b2">                   list-empty-hint。未经用户确认不得写业务代码；用户同意后写确认留痕：</span></span>
           <span class="ln"><span class="b2">                   ai confirm（用户自己敲）或 ai confirm --attested（用户已在对话里同意时代记）。</span></span>
@@ -422,9 +422,12 @@
   </section>
 
   <footer>
-    <p><b>关于本页数据的说明。</b>本页所有终端输出均为真实运行捕获（框架版本 2.2.1），仅做了三处处理：
-      把演示项目的绝对路径缩写为 <code>~/order-center</code>；<code>ai sync</code> 的 14 行写入清单与 Maven 日志做了节选；
-      <code>ai stats</code> 里把捕获时用的临时账本路径写回它默认的位置 <code>~/.ai-control/usage.jsonl</code>。</p>
+    <p><b>关于本页数据的说明。</b>本页所有终端输出均为真实运行捕获，仅做了三处处理：
+      把演示项目的绝对路径缩写为 <code>~/order-center</code>；<code>ai sync</code> 的 19 行写入清单与 Maven 日志做了节选；
+      <code>ai stats</code> 里把捕获时用的临时账本路径写回它默认的位置 <code>~/.ai-control/usage.jsonl</code>。
+      工牌里的版本号由 <code>package.json</code> 在运行时插值，已同步为 v2.3.0——该发布提交只改了
+      <code>package.json</code> / <code>CHANGELOG</code> / <code>README</code>，没有任何代码改动，
+      所以 2.3.0 下的输出与采集时逐字一致（已实测 <code>ai init</code> / <code>ai sync</code> 核对）。</p>
     <p>案例各幕的工牌计数（本机第 2 ~ 7 次）来自同一个演示项目按上述顺序连续跑出来的账本，所以是连贯的；
       §③ 的会话徽标取自同一项目。第 6 步的两条确认路径是同一个变更先后各确认一次的真实留痕（时间相邻），
       两个终端块就是那两次的原始输出。演示项目跑在一台未安装 Maven 的机器上，因此用一个只产出 surefire 报告的轻量替身代替
@@ -515,21 +518,26 @@ const INSTALL = [
   { t: 'note', text: '' },
   { t: 'cmd', text: 'cd order-center' },
   { t: 'cmd', text: 'ai init' },
-  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai init · 本机第 1 次' },
+  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai init · 本机第 1 次' },
   { t: 'ok',  text: 'INIT_OK：已安装（stack=java）。日常命令: ai new / check / confirm / test / ship' },
   { t: 'note', text: '' },
   { t: 'cmd', text: 'ai sync' },
-  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai sync · 本机第 2 次' },
-  { t: 'ok',  text: 'SYNC_OK written=14 skipped=0' },
-  { t: 'dim', text: '  + .claude/settings.json（合并 3 条钩子，用户配置保留）' },
-  { t: 'dim', text: '  + CLAUDE.md' },
-  { t: 'dim', text: '  + .claude/agents/{agent-spec,agent-dba,agent-dev,agent-test}.md' },
+  { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai sync · 本机第 2 次' },
+  { t: 'ok',  text: 'SYNC_OK written=19 skipped=0' },
+  { t: 'dim', text: '  + .claude/settings.json（Claude Code：合并 3 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + .codex/hooks.json（Codex：合并 3 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + .qoder/settings.json（Qoder：合并 3 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + .trae/hooks.json（Trae：合并 2 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + .cursor/hooks.json（Cursor：合并 2 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  + .workbuddy/settings.json（WorkBuddy：合并 3 条钩子，用户配置保留）' },
+  { t: 'dim', text: '  …（后 13 行已归并，原文是逐个列出的 .md 路径）' },
+  { t: 'dim', text: '  + CLAUDE.md · .claude/agents/{agent-spec,agent-dba,agent-dev,agent-test}.md' },
   { t: 'dim', text: '  + .claude/skills/{new-feature,ready-check,release-ship}/SKILL.md' },
   { t: 'dim', text: '  + .workbuddy/skills/{ai-control-contract,agent-spec,agent-dba,agent-dev,agent-test}/SKILL.md' },
-  { t: 'note', text: 'WorkBuddy：项目级技能已写入 .workbuddy/skills/，重启 WorkBuddy 生效。' },
-  { t: 'note', text: 'Codex / Cursor / Kimi / Qoder 原生读 AGENTS.md，无需操作。' },
+  { t: 'out', text: '钩子覆盖：Claude Code ✓拦截+工牌 · Codex ✓拦截+工牌 · Qoder ✓拦截+工牌 · Trae ✓拦截 · Cursor ✓拦截 · WorkBuddy ✓拦截+工牌' },
+  { t: 'dim', text: '  生效条件：WorkBuddy 需 Cmd+Q 完全重启（关窗无效）；Codex 需在 config.toml 开 [features] codex_hooks = true，并在 /hooks 信任本项目钩子；Trae / Qoder / Cursor 装完重开 IDE 或新开会话。' },
   { t: 'ok',  text: '' },
-  { t: 'ok',  text: '装完了 —— 装完之后，每条 ai 命令开头都会先打一行 bright-ai-coding 工牌（见上面两处青色行）。' },
+  { t: 'ok',  text: '装完了 —— 此后每条 ai 命令开头都会先打一行 bright-ai-coding 工牌（见上面两处青色行）。' },
 ];
 
 const instTerm = document.getElementById('inst-term');
@@ -650,7 +658,7 @@ async function drawStep(i, my) {
       stage.innerHTML = termBlock('ai new order-export-csv');
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai new order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai new · 本机第 2 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai new · 本机第 2 次' },
         { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/proposal.md' },
         { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/test-cases.md' },
         { t: 'dim', text: '[WRITE] ~/order-center/.ai/changes/order-export-csv/specs/order-export-csv/spec.md' },
@@ -672,7 +680,7 @@ async function drawStep(i, my) {
         termBlock('ai check order-export-csv（变更单尚未补全）');
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai check order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai check · 本机第 3 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai check · 本机第 3 次' },
         { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: 访问控制：本功能的权限要求是什么？' },
         { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: 数据表：涉及哪些表/字段/索引？（涉及则必须走数据库两阶段确认）' },
         { t: 'fail', text: '[FAIL] 待确认问题未答（proposal.md）: API 契约：路径、请求、响应、分页、错误码？（遵循 rules/20-api.md）' },
@@ -705,7 +713,7 @@ async function drawStep(i, my) {
         '</div>';
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai check order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai check · 本机第 4 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai check · 本机第 4 次' },
         { t: 'ok',  text: 'CHECK_PASSED：可向用户输出确认单（标注级别与判级理由）。' },
       ], () => terminated(my));
       break;
@@ -719,7 +727,7 @@ async function drawStep(i, my) {
         termBlock('① 终端里你自己敲（source: cli）');
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai confirm order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai confirm · 本机第 5 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai confirm · 本机第 5 次' },
         { t: 'ok',  text: 'CONFIRM_OK：已留痕（by=liuweiliang）。开始实现；proposal/test-cases 再改动需重新确认。' },
         { t: 'note', text: '' },
         { t: 'dim', text: '~/order-center/.ai/changes/order-export-csv/confirmed.json' },
@@ -799,7 +807,7 @@ async function drawStep(i, my) {
         termBlock('ai test order-export-csv');
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai test order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai test · 本机第 6 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai test · 本机第 6 次' },
         { t: 'out', text: '==> mvn test' },
         { t: 'dim', text: '[INFO] --- surefire:3.2.5:test (default-test) @ order-center ---' },
         { t: 'dim', text: '[INFO] Running com.example.order.OrderExportServiceTest' },
@@ -816,7 +824,7 @@ async function drawStep(i, my) {
       stage.innerHTML = termBlock('ai ship order-export-csv');
       await typeTerminal(document.getElementById('term-body'), [
         { t: 'cmd', text: 'ai ship order-export-csv' },
-        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.2.1 · ai ship · 本机第 7 次' },
+        { t: 'banner', text: '◆ bright-ai-coding · ai-control v2.3.0 · ai ship · 本机第 7 次' },
         { t: 'out', text: '确认来源：cli（用户本人敲的）' },
         { t: 'ok',  text: 'EVIDENCE_OK：报告 1 份，非手动用例 4 条全部有通过记录。' },
         { t: 'note', text: '提示：本变更涉及数据库，建议在新会话用 .ai/templates/review-prompt.md 做一次独立审查。' },

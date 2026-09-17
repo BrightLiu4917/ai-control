@@ -90,7 +90,7 @@
   <!-- ai init -->
   <text class="ok h" x="28" y="138" font-size="15">$</text>
   <text x="46" y="138" font-size="15"><tspan class="cmd h">ai init</tspan><tspan class="car3 ok"><tspan class="blink">▌</tspan></tspan></text>
-  <text class="i" x="46" y="165" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.2.1 · ai init · 本机第 1 次</tspan></text>
+  <text class="i" x="46" y="165" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.3.0 · ai init · 本机第 1 次</tspan></text>
   <text class="j" x="46" y="192" font-size="14"><tspan class="ok">INIT_OK：</tspan><tspan class="dim">已安装（stack=java）</tspan></text>
 
   <!-- 装入的东西 -->
@@ -120,7 +120,7 @@
   <!-- ai sync -->
   <text class="ok q" x="28" y="381" font-size="15">$</text>
   <text x="46" y="381" font-size="15"><tspan class="cmd q">ai sync</tspan><tspan class="car4 ok"><tspan class="blink">▌</tspan></tspan></text>
-  <text class="r" x="46" y="408" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.2.1 · ai sync · 本机第 2 次</tspan></text>
+  <text class="r" x="46" y="408" font-size="14"><tspan class="brand">◆ bright-ai-coding</tspan><tspan class="dim"> · ai-control v2.3.0 · ai sync · 本机第 2 次</tspan></text>
   <text class="s" x="46" y="435" font-size="14"><tspan class="ok">SYNC_OK：</tspan><tspan class="dim">written=19</tspan></text>
   <text class="dim t" x="68" y="462" font-size="13">+ CLAUDE.md、六工具的钩子配置（.claude/.codex/.qoder/.trae/.cursor/.workbuddy）</text>
   <text class="dim u" x="68" y="489" font-size="13">+ .claude/agents ×4、.claude/skills ×3、.workbuddy/skills ×5</text>
